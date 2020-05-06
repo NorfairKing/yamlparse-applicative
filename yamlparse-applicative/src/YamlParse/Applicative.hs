@@ -289,6 +289,6 @@ schemaDoc = go emptyComments
               let listDoc :: [Doc a] -> Doc a
                   listDoc = \case
                     [] -> "[]"
-                    (d : ds) -> vsep ["[" <+> d, vsep $ map ("," <+>) ds, "]"]
-               in e (listDoc $ map ge ss) cs
+                    (d : ds) -> vsep ["[" <+> nest 2 d, vsep $ map (("," <+>) . nest 2) ds, "]"]
+               in e (listDoc $ map ge ss) (cs <> comment "Alternatives")
             CommentSchema t s -> go (cs <> comment t) s
