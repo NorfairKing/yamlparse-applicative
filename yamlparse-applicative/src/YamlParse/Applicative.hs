@@ -60,11 +60,13 @@ instance FromYamlSchema MySubConfig where
     object "MySubConfig" $
       MySubConfig
         <$> optionalField "foofoo"
-        <*> optionalFieldWithDefault "barbar" "hi chris"
+        <*> optionalFieldWithDefault "barbar" "defaultTextHere"
         <*> (Left <$> (requiredField "left") <|> Right <$> (requiredField "right"))
 
--- TODO split this up into FromYamlSchema and FromObjectSchema?
--- Probably better not because we want the contents of ParseObject
+-- | A class of types for which a schema is defined.
+--
+-- Note that you do not have to use this class and can just use your own parser values.
+-- Note also that the parsing of a type of this class should correspond to the parsing of the type in the FromJSON class.
 class FromYamlSchema a where
   fromYamlSchema :: YamlParser a
 
@@ -92,36 +94,90 @@ instance FromYamlSchema a => FromYamlSchema (Vector a) where
 instance FromYamlSchema a => FromYamlSchema [a] where
   fromYamlSchema = V.toList <$> ParseArray Nothing (ParseList fromYamlSchema)
 
+-- | A parser for a required field at a given key
 requiredField :: FromYamlSchema a => Text -> ObjectParser a
-requiredField k = ParseField k $ FieldParserRequired fromYamlSchema
+requiredField k = requiredFieldWith k fromYamlSchema
 
+-- | A parser for a required field at a given key with a parser for what is found at that key
+requiredFieldWith :: Text -> YamlParser a -> ObjectParser a
+requiredFieldWith k func = ParseField k $ FieldParserRequired func
+
+-- | A parser for an optional field at a given key
 optionalField :: FromYamlSchema a => Text -> ObjectParser (Maybe a)
-optionalField k = ParseField k $ FieldParserOptional fromYamlSchema
+optionalField k = optionalFieldWith k fromYamlSchema
 
+-- | A parser for an optional field at a given key with a parser for what is found at that key
+optionalFieldWith :: Text -> YamlParser a -> ObjectParser (Maybe a)
+optionalFieldWith k func = ParseField k $ FieldParserOptional func
+
+-- | A parser for an optional field at a given key with a default value
 optionalFieldWithDefault :: (Show a, FromYamlSchema a) => Text -> a -> ObjectParser a
-optionalFieldWithDefault k d = ParseField k $ FieldParserOptionalWithDefault fromYamlSchema d
+optionalFieldWithDefault k d = optionalFieldWithDefaultWith k d fromYamlSchema
+
+-- | A parser for an optional field at a given key with a default value and a parser for what is found at that key
+--
+-- For the sake of documentation, the default value needs to be showable.
+optionalFieldWithDefaultWith :: Show a => Text -> a -> YamlParser a -> ObjectParser a
+optionalFieldWithDefaultWith k d func = ParseField k $ FieldParserOptionalWithDefault func d
 
 type YamlParser a = Parser Yaml.Value a
 
 type ObjectParser a = Parser Yaml.Object a
 
 data Parser i o where
+  -- | Return the input
   ParseAny :: Parser i i
+  -- | Parse a boolean value
   ParseBool :: Maybe Text -> Parser Bool o -> Parser Yaml.Value o
-  ParseString :: Maybe Text -> Parser Text o -> Parser Yaml.Value o
-  ParseNumber :: Maybe Text -> Parser Scientific o -> Parser Yaml.Value o
-  ParseArray :: Maybe Text -> Parser Yaml.Array o -> Parser Yaml.Value o
-  ParseObject :: Maybe Text -> Parser Yaml.Object a -> Parser Yaml.Value a
-  ParseList :: Parser Yaml.Value o -> Parser Yaml.Array (Vector o)
-  ParseField :: Text -> FieldParser o -> Parser Yaml.Object o
+  -- | Parse a String value
+  ParseString ::
+    -- | Extra info about what the string represents
+    -- This info will be used during parsing for error messages and in the schema for documentation.
+    Maybe Text ->
+    Parser Text o ->
+    Parser Yaml.Value o
+  -- | Parse a numeric value
+  ParseNumber ::
+    -- | Extra info about what the number represents
+    -- This info will be used during parsing for error messages and in the schema for documentation.
+    Maybe Text ->
+    Parser Scientific o ->
+    Parser Yaml.Value o
+  -- | Parse an array
+  ParseArray ::
+    -- | Extra info about what the array represents
+    -- This info will be used during parsing for error messages and in the schema for documentation.
+    Maybe Text ->
+    Parser Yaml.Array o ->
+    Parser Yaml.Value o
+  -- | Parse an object
+  ParseObject ::
+    -- | Extra info about what the object represents
+    -- This info will be used during parsing for error messages and in the schema for documentation.
+    Maybe Text ->
+    Parser Yaml.Object a ->
+    Parser Yaml.Value a
+  -- | Parse a list of elements all in the same way
+  ParseList ::
+    Parser Yaml.Value o ->
+    Parser Yaml.Array (Vector o)
+  -- | Parse a field of an object
+  ParseField ::
+    Text ->
+    -- | The key of the field
+    FieldParser o ->
+    Parser Yaml.Object o
+  -- | A pure value
   ParsePure :: a -> Parser i a
+  -- | To implement Functor
   ParseFmap :: (a -> b) -> Parser i a -> Parser i b
+  -- | To implement Applicative
   ParseAp :: Parser i (a -> b) -> Parser i a -> Parser i b
+  -- | To implement Alternative
   ParseAlt :: [Parser i o] -> Parser i o
+  -- | Add comments to the parser.
+  -- This info will be used in the schema for documentation.
   ParseComment :: Text -> Parser i o -> Parser i o
-
-object :: Text -> ObjectParser o -> YamlParser o
-object name = ParseObject (Just name)
 
 instance Functor (Parser i) where
   fmap = ParseFmap
@@ -142,15 +198,29 @@ data FieldParser o where
   FieldParserOptional :: YamlParser o -> FieldParser (Maybe o)
   FieldParserOptionalWithDefault :: Show o => YamlParser o -> o -> FieldParser o
 
+-- | Declare a parser of a named object
+object :: Text -> ObjectParser o -> YamlParser o
+object name = ParseObject (Just name)
+
+-- | Declare a parser of an unnamed object
+--
+-- Prefer 'object' if you can.
+unnamedObject :: ObjectParser o -> YamlParser o
+unnamedObject = ParseObject Nothing
+
+-- | Add a comment to a parser
+-- This info will be used in the schema for documentation.
 (<?>) :: Parser i a -> Text -> Parser i a
 (<?>) = flip ParseComment
 
+-- | Use a 'Parser' to parse a value from Yaml.
+--
+-- A 'Parser i o' corresponds exactly to a 'i -> Yaml.Parser o' and this function servers as evidence for that.
 implementParser :: Parser i o -> (i -> Yaml.Parser o)
 implementParser = go
   where
     go :: Parser i o -> (i -> Yaml.Parser o)
     go = \case
-      -- TODO figure out which text to put in the 'with' things.
       ParseAny -> pure
       ParseBool t p -> Yaml.withBool (maybe "Bool" T.unpack t) $ go p
       ParseString t p -> Yaml.withText (maybe "String" T.unpack t) $ go p
@@ -178,8 +248,8 @@ implementParser = go
       ParseFmap f p -> fmap f . go p
       ParseComment _ p -> go p
 
--- FieldParserOptional p -> o Yaml..:? k >>= go p
-
+-- | Use a parser to produce a schema that describes it for documentation.
+--
 -- Nothing means that nothing even needs to be parsed,
 -- you just get the 'a' without parsing anything.
 -- This is for the 'pure' case.
@@ -205,7 +275,9 @@ explainParser = go
       ParseAlt ps -> Just $ AltSchema $ catMaybes (map go ps)
       ParseComment t p -> CommentSchema t <$> go p
 
--- TODO make schema a gadt?
+-- A schema for a parser.
+--
+-- This is used to produce documentation for what/how the parser parses.
 data Schema
   = AnySchema
   | BoolSchema (Maybe Text)
@@ -220,17 +292,16 @@ data Schema
   | CommentSchema Text Schema
   deriving (Show, Eq)
 
+-- | Render a schema as pretty text.
+--
+-- This is meant for humans.
+-- The output may look like YAML but it is not.
 prettySchema :: Schema -> Text
 prettySchema = renderStrict . layoutPretty defaultLayoutOptions . schemaDoc
 
+-- | A list of comments
 newtype Comments = Comments {commentsList :: [Doc ()]}
   deriving (Show)
-
-emptyComments :: Comments
-emptyComments = Comments []
-
-comment :: Text -> Comments
-comment t = Comments [pretty t]
 
 instance Semigroup Comments where
   (Comments l1) <> (Comments l2) = Comments $ l1 <> l2
@@ -239,6 +310,15 @@ instance Monoid Comments where
   mempty = emptyComments
   mappend = (<>)
 
+-- | No comments
+emptyComments :: Comments
+emptyComments = Comments []
+
+-- | A raw text as comments
+comment :: Text -> Comments
+comment t = Comments [pretty t]
+
+-- | Prettyprint a 'Schema'
 schemaDoc :: Schema -> Doc ()
 schemaDoc = go emptyComments
   where
