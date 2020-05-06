@@ -191,11 +191,14 @@ data Schema
 prettySchema :: Schema -> Text
 prettySchema = renderStrict . layoutPretty defaultLayoutOptions . schemaDoc
 
-newtype Comments = Comments {commentsList :: [Text]}
-  deriving (Show, Eq)
+newtype Comments = Comments {commentsList :: [Doc ()]}
+  deriving (Show)
 
 emptyComments :: Comments
 emptyComments = Comments []
+
+comment :: Text -> Comments
+comment t = Comments [pretty t]
 
 instance Semigroup Comments where
   (Comments l1) <> (Comments l2) = Comments $ l1 <> l2
@@ -204,40 +207,42 @@ instance Monoid Comments where
   mempty = emptyComments
   mappend = (<>)
 
-schemaDoc :: Schema -> Doc a
-schemaDoc = go
+schemaDoc :: Schema -> Doc ()
+schemaDoc = go emptyComments
   where
-    go :: Schema -> Doc a
-    go = \case
-      AnySchema -> "<any>"
-      BoolSchema t -> "<bool> # " <> pretty t
-      NumberSchema t -> "<number> # " <> pretty t
-      StringSchema t -> "<string> # " <> pretty t
-      ListSchema s -> go s
-      ArraySchema t s -> "-" <+> go s <+> "# " <> pretty t
-      ObjectSchema _ s -> go s
-      FieldSchema k r md s ->
-        let keyDoc :: Doc a
-            keyDoc = pretty k
-            requiredDoc :: Doc a
-            requiredDoc = if r then "required" else "optional"
-            mkComment :: Doc a -> Doc a
-            mkComment = ("# " <>)
-            mDefaultDoc :: Maybe (Doc a)
-            mDefaultDoc = (("default: " <>) . pretty) <$> md
-            mCommentsDoc :: Maybe (Doc a)
-            mCommentsDoc =
-              let commentDocs = catMaybes [mDefaultDoc]
-               in if null commentDocs
-                    then Nothing
-                    else Just $ align $ vsep $ map mkComment commentDocs
-         in -- old = vsep [(keyDoc <> ":"), indent 2 $ vsep [comments, go s]]
-            vsep
-              [ keyDoc <> ":" <+> mkComment requiredDoc,
-                indent 2 $
-                  case mCommentsDoc of
-                    Nothing -> go s
-                    Just cs -> vsep [cs, go s]
-              ]
-      ApSchema s1 s2 -> align $ vsep [go s1, go s2]
-      CommentSchema t s -> align $ vsep ["# " <> pretty t, go s]
+    go :: Comments -> Schema -> Doc ()
+    go cs =
+      let g = go cs
+          mkComment :: Doc () -> Doc ()
+          mkComment = ("# " <>)
+          mkCommentsMDoc :: Comments -> Maybe (Doc ())
+          mkCommentsMDoc = \case
+            Comments [] -> Nothing
+            Comments l -> Just $ align $ vsep $ map mkComment l
+          e :: Doc () -> Comments -> Doc ()
+          e s cs' =
+            case mkCommentsMDoc cs' of
+              Nothing -> s
+              Just cd -> vsep [cd, s]
+       in \case
+            AnySchema -> e "<any>" cs
+            BoolSchema t -> e "<bool>" $ cs <> comment t
+            NumberSchema t -> e "<number>" $ cs <> comment t
+            StringSchema t -> e "<string>" $ cs <> comment t
+            ListSchema s -> g s
+            ArraySchema t s -> "-" <+> align (go (cs <> comment t) s)
+            ObjectSchema _ s -> g s
+            FieldSchema k r md s ->
+              let keyDoc :: Doc a
+                  keyDoc = pretty k
+                  requiredDoc :: Doc a
+                  requiredDoc = if r then "required" else "optional"
+                  mDefaultDoc :: Maybe (Doc a)
+                  mDefaultDoc = (("default: " <>) . pretty) <$> md
+                  cs' = cs <> (Comments (catMaybes [mDefaultDoc]))
+               in vsep
+                    [ keyDoc <> ":" <+> mkComment requiredDoc,
+                      indent 2 $ e (g s) cs'
+                    ]
+            ApSchema s1 s2 -> align $ vsep [g s1, g s2]
+            CommentSchema t s -> go (cs <> comment t) s
