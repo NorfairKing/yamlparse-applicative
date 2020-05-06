@@ -14,10 +14,15 @@ library:
   source-dirs: src
   dependencies:
   - yaml
-  - json-schema
+  - aeson
+  - bytestring
+  - text
+  - prettyprinter
+  - vector
+  - unordered-containers
 
 executables:
-  yamlparse-applicativedemo:
+  yamlparse-applicative-demo:
     main:                Main.hs
     source-dirs:         app
     ghc-options:

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d62bd2a0372ca30e482c32cf8224940cf3e612659ddb2623f188337b8c704ed6
+-- hash: 35fcb0fdc5fcd0d6576470c22950210e817b9e392eda44e5e73e45b8ad7d6de7
 
 name:           yamlparse-applicative
 version:        0.0.0.0
@@ -28,12 +28,17 @@ library
   hs-source-dirs:
       src
   build-depends:
-      base >=4.7 && <5
-    , json-schema
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , prettyprinter
+    , text
+    , unordered-containers
+    , vector
     , yaml
   default-language: Haskell2010
 
-executable yamlparse-applicativedemo
+executable yamlparse-applicative-demo
   main-is: Main.hs
   other-modules:
       Paths_yamlparse_applicative
