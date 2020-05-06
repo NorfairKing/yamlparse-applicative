@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
@@ -19,9 +20,12 @@ import Data.Text (Text)
 import qualified Data.Text.IO as T
 import Data.Text.Prettyprint.Doc
 import Data.Text.Prettyprint.Doc.Render.Text
+import Data.Validity
+import Data.Validity.Text
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 import qualified Data.Yaml as Yaml
+import GHC.Generics (Generic)
 
 someFunc :: IO ()
 someFunc = do
@@ -78,9 +82,6 @@ instance FromYamlSchema Text where
 
 instance FromYamlSchema Scientific where
   fromYamlSchema = ParseNumber Nothing ParseAny
-
-instance FromYamlSchema Yaml.Array where
-  fromYamlSchema = ParseArray Nothing ParseAny
 
 instance FromYamlSchema Yaml.Object where
   fromYamlSchema = ParseObject Nothing ParseAny
@@ -250,8 +251,7 @@ implementParser = go
 
 -- | Use a parser to produce a schema that describes it for documentation.
 --
--- Nothing means that nothing even needs to be parsed,
--- you just get the 'a' without parsing anything.
+-- Nothing means that nothing even needs to be parsed, you just get the 'a' without parsing anything.
 -- This is for the 'pure' case.
 explainParser :: Parser i o -> Maybe Schema
 explainParser = go
@@ -290,7 +290,9 @@ data Schema
   | ApSchema Schema Schema -- We'll take this to mean 'and'
   | AltSchema [Schema]
   | CommentSchema Text Schema
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
+
+instance Validity Schema
 
 -- | Render a schema as pretty text.
 --

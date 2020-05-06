@@ -13,14 +13,16 @@ dependencies:
 library:
   source-dirs: src
   dependencies:
-  - yaml
   - aeson
   - bytestring
-  - text
   - prettyprinter
-  - vector
-  - unordered-containers
   - scientific
+  - text
+  - unordered-containers
+  - validity
+  - validity-text
+  - vector
+  - yaml
 
 executables:
   yamlparse-applicative-demo:
@@ -42,4 +44,13 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
+    - QuickCheck
+    - aeson
+    - genvalidity-hspec
+    - genvalidity-aeson
+    - genvalidity-scientific
+    - genvalidity-text
+    - hspec
+    - scientific
+    - text
     - yamlparse-applicative
