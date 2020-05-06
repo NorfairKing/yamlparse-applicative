@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 35fcb0fdc5fcd0d6576470c22950210e817b9e392eda44e5e73e45b8ad7d6de7
+-- hash: 361ce7f0bbd0396cfbf4a710d2f1d6714444ddc30647e360101cb89b7f57d011
 
 name:           yamlparse-applicative
 version:        0.0.0.0
@@ -32,6 +32,7 @@ library
     , base >=4.7 && <5
     , bytestring
     , prettyprinter
+    , scientific
     , text
     , unordered-containers
     , vector
