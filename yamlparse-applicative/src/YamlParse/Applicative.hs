@@ -10,10 +10,9 @@ module YamlParse.Applicative where
 -- import Data.HashMap.Strict (HashMap)
 -- import qualified Data.HashMap.Strict as HM
 
--- import Data.Maybe
-
 import Control.Applicative
 import Control.Monad
+import Data.Maybe
 import Data.Scientific
 import qualified Data.Text as T
 import Data.Text (Text)
@@ -118,7 +117,7 @@ data Parser i o where
   ParsePure :: a -> Parser i a
   ParseFmap :: (a -> b) -> Parser i a -> Parser i b
   ParseAp :: Parser i (a -> b) -> Parser i a -> Parser i b
-  ParseAlt :: Parser i o -> Parser i o -> Parser i o
+  ParseAlt :: [Parser i o] -> Parser i o
   ParseComment :: Text -> Parser i o -> Parser i o
 
 object :: Text -> ObjectParser o -> YamlParser o
@@ -132,9 +131,9 @@ instance Applicative (Parser i) where
   (<*>) = ParseAp
 
 instance Alternative (Parser i) where
-  empty = undefined -- TODO figure out what to do here. Always fail?
-  (<|>) = ParseAlt
-  some = undefined
+  empty = ParseAlt []
+  l <|> r = ParseAlt [l, r]
+  some = undefined -- TODO figure out what to do here
   many = undefined
 
 data FieldParser o where
@@ -172,7 +171,9 @@ implementParser = go
       ParseObject t p -> Yaml.withObject (maybe "Object" T.unpack t) $ go p
       ParsePure v -> const $ pure v
       ParseAp pf p -> \v -> go pf v <*> go p v
-      ParseAlt p1 p2 -> \v -> go p1 v <|> go p2 v
+      ParseAlt ps -> \v -> case ps of
+        [] -> fail "No alternatives."
+        (p : ps') -> go p v <|> go (ParseAlt ps') v
       ParseFmap f p -> fmap f . go p
       ParseComment _ p -> go p
 
@@ -200,7 +201,7 @@ explainParser = go
       ParsePure _ -> Nothing
       ParseFmap _ p -> go p
       ParseAp pf p -> ApSchema <$> go pf <*> go p
-      ParseAlt p1 p2 -> AltSchema <$> go p1 <*> go p2
+      ParseAlt ps -> Just $ AltSchema $ catMaybes (map go ps)
       ParseComment t p -> CommentSchema t <$> go p
 
 -- TODO make schema a gadt?
@@ -214,7 +215,7 @@ data Schema
   | ListSchema Schema
   | FieldSchema Text Bool (Maybe Text) Schema
   | ApSchema Schema Schema -- We'll take this to mean 'and'
-  | AltSchema Schema Schema
+  | AltSchema [Schema]
   | CommentSchema Text Schema
   deriving (Show, Eq)
 
@@ -243,6 +244,7 @@ schemaDoc = go emptyComments
     go :: Comments -> Schema -> Doc ()
     go cs =
       let g = go cs
+          ge = go emptyComments
           mkComment :: Doc () -> Doc ()
           mkComment = ("# " <>)
           mkCommentsMDoc :: Comments -> Maybe (Doc ())
@@ -266,7 +268,7 @@ schemaDoc = go emptyComments
             ArraySchema t s -> "-" <+> align (go (addMComment cs t) s)
             -- The comments really only work on the object level
             -- so they are erased when going down
-            ObjectSchema t s -> e (go emptyComments s) (addMComment cs t)
+            ObjectSchema t s -> e (ge s) (addMComment cs t)
             ListSchema s -> g s
             FieldSchema k r md s ->
               let keyDoc :: Doc a
@@ -283,5 +285,10 @@ schemaDoc = go emptyComments
                       indent 2 $ e (g s) cs
                     ]
             ApSchema s1 s2 -> align $ vsep [g s1, g s2]
-            AltSchema s1 s2 -> list [g s1, g s2]
+            AltSchema ss ->
+              let listDoc :: [Doc a] -> Doc a
+                  listDoc = \case
+                    [] -> "[]"
+                    (d : ds) -> vsep ["[" <+> d, vsep $ map ("," <+>) ds, "]"]
+               in e (listDoc $ map ge ss) cs
             CommentSchema t s -> go (cs <> comment t) s
