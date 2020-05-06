@@ -126,6 +126,7 @@ object name = ParseObject (Just name)
 instance Functor (Parser i) where
   fmap = ParseFmap
 
+-- Realy only makes sense for 'Parser Yaml.Object', but we need 'Parser i' here to get the 'Alternative' instance to work
 instance Applicative (Parser i) where
   pure = ParsePure
   (<*>) = ParseAp
