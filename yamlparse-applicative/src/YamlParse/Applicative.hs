@@ -40,7 +40,7 @@ data MyConfig
   deriving (Show, Eq)
 
 instance FromYamlSchema MyConfig where
-  fromYamlSchema = MyConfig <$> requiredField "myText" <*> optionalField "myInt" <*> optionalFieldWithDefault "list" []
+  fromYamlSchema = MyConfig <$> requiredField "foo" <*> optionalField "bar" <*> optionalFieldWithDefault "quux" []
 
 data MyThing = MyThing [Bool] Text
 
@@ -192,6 +192,6 @@ schemaDoc = go
                     (("default: " <>) . pretty)
                       <$> d
                   ]
-         in vsep [(pretty k <> ":"), indent 2 (go s <+> comments)]
+         in vsep [(pretty k <> ":"), indent 2 $ vsep [comments, go s]]
       ApSchema s1 s2 -> align $ vsep [go s1, go s2]
       CommentSchema t s -> align $ vsep ["# " <> pretty t, go s]
