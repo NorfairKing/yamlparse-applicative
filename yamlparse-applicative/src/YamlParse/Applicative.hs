@@ -11,7 +11,7 @@ module YamlParse.Applicative where
 -- import qualified Data.HashMap.Strict as HM
 
 import Control.Monad
-import Data.Maybe
+-- import Data.Maybe
 import Data.Scientific
 import qualified Data.Text as T
 import Data.Text (Text)
@@ -24,7 +24,6 @@ import qualified Data.Yaml as Yaml
 
 someFunc :: IO ()
 someFunc = do
-  putStrLn "MyConfig"
   forM_
     (explainParser (fromYamlSchema :: YamlParser MyConfig))
     $ T.putStrLn . prettySchema
@@ -35,7 +34,13 @@ data MyConfig
   deriving (Show, Eq)
 
 instance FromYamlSchema MyConfig where
-  fromYamlSchema = ParseObject "MyConfig" $ MyConfig <$> requiredField "foo" <*> optionalField "bar" <*> optionalFieldWithDefault "quux" [] <*> optionalField "sub"
+  fromYamlSchema =
+    object "MyConfig" $
+      MyConfig
+        <$> requiredField "foo"
+        <*> optionalField "bar"
+        <*> optionalFieldWithDefault "quux" []
+        <*> optionalField "sub"
 
 data MySubConfig
   = MySubConfig
@@ -45,7 +50,11 @@ data MySubConfig
   deriving (Show, Eq)
 
 instance FromYamlSchema MySubConfig where
-  fromYamlSchema = ParseObject "MySubConfig" $ MySubConfig <$> optionalField "foofoo" <*> requiredField "barbar"
+  fromYamlSchema =
+    object "MySubConfig" $
+      MySubConfig
+        <$> optionalField "foofoo"
+        <*> optionalFieldWithDefault "barbar" "hi chris"
 
 -- TODO split this up into FromYamlSchema and FromObjectSchema?
 -- Probably better not because we want the contents of ParseObject
@@ -53,28 +62,28 @@ class FromYamlSchema a where
   fromYamlSchema :: YamlParser a
 
 instance FromYamlSchema Bool where
-  fromYamlSchema = ParseBool "Bool" ParseAny
+  fromYamlSchema = ParseBool Nothing ParseAny
 
 instance FromYamlSchema Text where
-  fromYamlSchema = ParseString "Text" ParseAny
+  fromYamlSchema = ParseString Nothing ParseAny
 
 instance FromYamlSchema Scientific where
-  fromYamlSchema = ParseNumber "Scientific" ParseAny
+  fromYamlSchema = ParseNumber Nothing ParseAny
 
 instance FromYamlSchema Yaml.Array where
-  fromYamlSchema = ParseArray "Array" ParseAny
+  fromYamlSchema = ParseArray Nothing ParseAny
 
 instance FromYamlSchema Yaml.Object where
-  fromYamlSchema = ParseObject "Object" ParseAny
+  fromYamlSchema = ParseObject Nothing ParseAny
 
 instance FromYamlSchema Yaml.Value where
   fromYamlSchema = ParseAny
 
 instance FromYamlSchema a => FromYamlSchema (Vector a) where
-  fromYamlSchema = ParseArray "Vector" (ParseList fromYamlSchema)
+  fromYamlSchema = ParseArray Nothing (ParseList fromYamlSchema)
 
 instance FromYamlSchema a => FromYamlSchema [a] where
-  fromYamlSchema = V.toList <$> ParseArray "List" (ParseList fromYamlSchema)
+  fromYamlSchema = V.toList <$> ParseArray Nothing (ParseList fromYamlSchema)
 
 requiredField :: FromYamlSchema a => Text -> ObjectParser a
 requiredField k = ParseField k $ FieldParserRequired fromYamlSchema
@@ -91,17 +100,20 @@ type ObjectParser a = Parser Yaml.Object a
 
 data Parser i o where
   ParseAny :: Parser i i
-  ParseBool :: Text -> Parser Bool o -> Parser Yaml.Value o
-  ParseString :: Text -> Parser Text o -> Parser Yaml.Value o
-  ParseNumber :: Text -> Parser Scientific o -> Parser Yaml.Value o
+  ParseBool :: Maybe Text -> Parser Bool o -> Parser Yaml.Value o
+  ParseString :: Maybe Text -> Parser Text o -> Parser Yaml.Value o
+  ParseNumber :: Maybe Text -> Parser Scientific o -> Parser Yaml.Value o
+  ParseArray :: Maybe Text -> Parser Yaml.Array o -> Parser Yaml.Value o
+  ParseObject :: Maybe Text -> Parser Yaml.Object a -> Parser Yaml.Value a
   ParseList :: Parser Yaml.Value o -> Parser Yaml.Array (Vector o)
-  ParseArray :: Text -> Parser Yaml.Array o -> Parser Yaml.Value o
   ParseField :: Text -> FieldParser o -> Parser Yaml.Object o
-  ParseObject :: Text -> Parser Yaml.Object a -> Parser Yaml.Value a
   ParsePure :: a -> Parser i a
   ParseFmap :: (a -> b) -> Parser i a -> Parser i b
   ParseAp :: Parser i (a -> b) -> Parser i a -> Parser i b
   ParseComment :: Text -> Parser i o -> Parser i o
+
+object :: Text -> ObjectParser o -> YamlParser o
+object name = ParseObject (Just name)
 
 instance Functor (Parser i) where
   fmap = ParseFmap
@@ -125,11 +137,11 @@ implementParser = go
     go = \case
       -- TODO figure out which text to put in the 'with' things.
       ParseAny -> pure
-      ParseBool t p -> Yaml.withBool (T.unpack t) $ go p
-      ParseString t p -> Yaml.withText (T.unpack t) $ go p
-      ParseNumber t p -> Yaml.withScientific (T.unpack t) $ go p
+      ParseBool t p -> Yaml.withBool (maybe "Bool" T.unpack t) $ go p
+      ParseString t p -> Yaml.withText (maybe "String" T.unpack t) $ go p
+      ParseNumber t p -> Yaml.withScientific (maybe "Number" T.unpack t) $ go p
       ParseList p -> \l -> forM l $ \v -> go p v
-      ParseArray t p -> Yaml.withArray (T.unpack t) $ go p
+      ParseArray t p -> Yaml.withArray (maybe "Array" T.unpack t) $ go p
       ParseField key fp -> \o -> case fp of
         FieldParserRequired p -> o Yaml..: key >>= go p
         FieldParserOptional p -> do
@@ -142,7 +154,7 @@ implementParser = go
           case mv of
             Nothing -> pure d
             Just v -> go p v
-      ParseObject t p -> Yaml.withObject (T.unpack t) $ go p
+      ParseObject t p -> Yaml.withObject (maybe "Object" T.unpack t) $ go p
       ParsePure v -> const $ pure v
       ParseAp pf p -> \v -> go pf v <*> go p v
       ParseFmap f p -> fmap f . go p
@@ -177,13 +189,13 @@ explainParser = go
 -- TODO make schema a gadt?
 data Schema
   = AnySchema
-  | BoolSchema Text
-  | NumberSchema Text
-  | StringSchema Text
+  | BoolSchema (Maybe Text)
+  | NumberSchema (Maybe Text)
+  | StringSchema (Maybe Text)
+  | ArraySchema (Maybe Text) Schema
+  | ObjectSchema (Maybe Text) Schema
   | ListSchema Schema
-  | ArraySchema Text Schema
   | FieldSchema Text Bool (Maybe Text) Schema
-  | ObjectSchema Text Schema
   | ApSchema Schema Schema -- We'll take this to mean 'and'
   | CommentSchema Text Schema
   deriving (Show, Eq)
@@ -219,6 +231,10 @@ schemaDoc = go emptyComments
           mkCommentsMDoc = \case
             Comments [] -> Nothing
             Comments l -> Just $ align $ vsep $ map mkComment l
+          addMComment :: Comments -> Maybe Text -> Comments
+          addMComment c = \case
+            Nothing -> c
+            Just t -> c <> comment t
           e :: Doc () -> Comments -> Doc ()
           e s cs' =
             case mkCommentsMDoc cs' of
@@ -226,23 +242,25 @@ schemaDoc = go emptyComments
               Just cd -> vsep [cd, s]
        in \case
             AnySchema -> e "<any>" cs
-            BoolSchema t -> e "<bool>" $ cs <> comment t
-            NumberSchema t -> e "<number>" $ cs <> comment t
-            StringSchema t -> e "<string>" $ cs <> comment t
+            BoolSchema t -> e "<bool>" $ addMComment cs t
+            NumberSchema t -> e "<number>" $ addMComment cs t
+            StringSchema t -> e "<string>" $ addMComment cs t
+            ArraySchema t s -> "-" <+> align (go (addMComment cs t) s)
+            ObjectSchema t s -> e (go emptyComments s) (addMComment cs t)
             ListSchema s -> g s
-            ArraySchema t s -> "-" <+> align (go (cs <> comment t) s)
-            ObjectSchema _ s -> g s
             FieldSchema k r md s ->
               let keyDoc :: Doc a
                   keyDoc = pretty k
                   requiredDoc :: Doc a
-                  requiredDoc = if r then "required" else "optional"
-                  mDefaultDoc :: Maybe (Doc a)
-                  mDefaultDoc = (("default: " <>) . pretty) <$> md
-                  cs' = cs <> (Comments (catMaybes [mDefaultDoc]))
+                  requiredDoc =
+                    if r
+                      then "required"
+                      else case md of
+                        Nothing -> "optional"
+                        Just d -> "optional, default:" <+> pretty d
                in vsep
                     [ keyDoc <> ":" <+> mkComment requiredDoc,
-                      indent 2 $ e (g s) cs'
+                      indent 2 $ e (g s) cs
                     ]
             ApSchema s1 s2 -> align $ vsep [g s1, g s2]
             CommentSchema t s -> go (cs <> comment t) s
