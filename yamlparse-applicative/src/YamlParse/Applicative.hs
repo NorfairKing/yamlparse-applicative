@@ -27,7 +27,6 @@ someFunc = do
   forM_
     (explainParser (fromYamlSchema :: YamlParser MyConfig))
     $ T.putStrLn . prettySchema
-  putStrLn ""
 
 data MyConfig
   = MyConfig {myConfigText :: Text, myConfigScientific :: Maybe Scientific, myConfigList :: [Bool], myConfigSub :: Maybe MySubConfig}
@@ -246,6 +245,8 @@ schemaDoc = go emptyComments
             NumberSchema t -> e "<number>" $ addMComment cs t
             StringSchema t -> e "<string>" $ addMComment cs t
             ArraySchema t s -> "-" <+> align (go (addMComment cs t) s)
+            -- The comments really only work on the object level
+            -- so they are erased when going down
             ObjectSchema t s -> e (go emptyComments s) (addMComment cs t)
             ListSchema s -> g s
             FieldSchema k r md s ->
