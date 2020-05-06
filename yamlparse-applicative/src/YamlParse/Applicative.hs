@@ -10,8 +10,10 @@ module YamlParse.Applicative where
 -- import Data.HashMap.Strict (HashMap)
 -- import qualified Data.HashMap.Strict as HM
 
-import Control.Monad
 -- import Data.Maybe
+
+import Control.Applicative
+import Control.Monad
 import Data.Scientific
 import qualified Data.Text as T
 import Data.Text (Text)
@@ -29,7 +31,12 @@ someFunc = do
     $ T.putStrLn . prettySchema
 
 data MyConfig
-  = MyConfig {myConfigText :: Text, myConfigScientific :: Maybe Scientific, myConfigList :: [Bool], myConfigSub :: Maybe MySubConfig}
+  = MyConfig
+      { myConfigText :: Text,
+        myConfigScientific :: Maybe Scientific,
+        myConfigList :: [Bool],
+        myConfigSub :: Maybe MySubConfig
+      }
   deriving (Show, Eq)
 
 instance FromYamlSchema MyConfig where
@@ -44,7 +51,8 @@ instance FromYamlSchema MyConfig where
 data MySubConfig
   = MySubConfig
       { mySubConfigBool :: Maybe Bool,
-        mySubConfigText :: Text
+        mySubConfigText :: Text,
+        mySubConfigAlt :: Either Text Bool
       }
   deriving (Show, Eq)
 
@@ -54,6 +62,7 @@ instance FromYamlSchema MySubConfig where
       MySubConfig
         <$> optionalField "foofoo"
         <*> optionalFieldWithDefault "barbar" "hi chris"
+        <*> (Left <$> (requiredField "left") <|> Right <$> (requiredField "right"))
 
 -- TODO split this up into FromYamlSchema and FromObjectSchema?
 -- Probably better not because we want the contents of ParseObject
@@ -109,6 +118,7 @@ data Parser i o where
   ParsePure :: a -> Parser i a
   ParseFmap :: (a -> b) -> Parser i a -> Parser i b
   ParseAp :: Parser i (a -> b) -> Parser i a -> Parser i b
+  ParseAlt :: Parser i o -> Parser i o -> Parser i o
   ParseComment :: Text -> Parser i o -> Parser i o
 
 object :: Text -> ObjectParser o -> YamlParser o
@@ -117,9 +127,15 @@ object name = ParseObject (Just name)
 instance Functor (Parser i) where
   fmap = ParseFmap
 
-instance Applicative (Parser Yaml.Object) where
+instance Applicative (Parser i) where
   pure = ParsePure
   (<*>) = ParseAp
+
+instance Alternative (Parser i) where
+  empty = undefined -- TODO figure out what to do here. Always fail?
+  (<|>) = ParseAlt
+  some = undefined
+  many = undefined
 
 data FieldParser o where
   FieldParserRequired :: YamlParser o -> FieldParser o
@@ -156,6 +172,7 @@ implementParser = go
       ParseObject t p -> Yaml.withObject (maybe "Object" T.unpack t) $ go p
       ParsePure v -> const $ pure v
       ParseAp pf p -> \v -> go pf v <*> go p v
+      ParseAlt p1 p2 -> \v -> go p1 v <|> go p2 v
       ParseFmap f p -> fmap f . go p
       ParseComment _ p -> go p
 
@@ -183,6 +200,7 @@ explainParser = go
       ParsePure _ -> Nothing
       ParseFmap _ p -> go p
       ParseAp pf p -> ApSchema <$> go pf <*> go p
+      ParseAlt p1 p2 -> AltSchema <$> go p1 <*> go p2
       ParseComment t p -> CommentSchema t <$> go p
 
 -- TODO make schema a gadt?
@@ -196,6 +214,7 @@ data Schema
   | ListSchema Schema
   | FieldSchema Text Bool (Maybe Text) Schema
   | ApSchema Schema Schema -- We'll take this to mean 'and'
+  | AltSchema Schema Schema
   | CommentSchema Text Schema
   deriving (Show, Eq)
 
@@ -264,4 +283,5 @@ schemaDoc = go emptyComments
                       indent 2 $ e (g s) cs
                     ]
             ApSchema s1 s2 -> align $ vsep [g s1, g s2]
+            AltSchema s1 s2 -> list [g s1, g s2]
             CommentSchema t s -> go (cs <> comment t) s
