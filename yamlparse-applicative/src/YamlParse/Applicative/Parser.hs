@@ -15,6 +15,7 @@ import qualified Data.Text.Encoding as TE
 import Data.Validity.Text ()
 import Data.Vector (Vector)
 import qualified Data.Yaml as Yaml
+import Text.Read
 
 -- | A parser that takes values of type 'i' as input and parses them into values of type 'o'
 --
@@ -108,14 +109,20 @@ type YamlParser a = Parser Yaml.Value a
 type ObjectParser a = Parser Yaml.Object a
 
 -- | Declare a parser of a named object
-object :: Text -> ObjectParser o -> YamlParser o
-object name = ParseObject (Just name)
+objectParser :: Text -> ObjectParser o -> YamlParser o
+objectParser name = ParseObject (Just name)
 
 -- | Declare a parser of an unnamed object
 --
--- Prefer 'object' if you can.
-unnamedObject :: ObjectParser o -> YamlParser o
-unnamedObject = ParseObject Nothing
+-- Prefer 'objectParser' if you can.
+unnamedObjectParser :: ObjectParser o -> YamlParser o
+unnamedObjectParser = ParseObject Nothing
+
+-- | Parse a string-like thing by 'Read'-ing it
+--
+-- You probably don't want to use 'Read'.
+viaRead :: Read a => YamlParser a
+viaRead = ParseMaybe readMaybe $ T.unpack <$> ParseString Nothing ParseAny
 
 -- | Declare a parser for an exact string.
 --

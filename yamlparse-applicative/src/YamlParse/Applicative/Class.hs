@@ -7,11 +7,13 @@
 module YamlParse.Applicative.Class where
 
 import qualified Data.Aeson as JSON
+import Data.Int
 import Data.Scientific
 import qualified Data.Text as T
 import Data.Text (Text)
 import Data.Vector (Vector)
 import qualified Data.Vector as V
+import Data.Word
 import qualified Data.Yaml as Yaml
 import GHC.Generics (Generic)
 import YamlParse.Applicative.Implement
@@ -55,6 +57,39 @@ instance YamlSchema Text where
 
 instance YamlSchema Scientific where
   yamlSchema = ParseNumber Nothing ParseAny
+
+instance YamlSchema Int where
+  yamlSchema = boundedIntegerSchema
+
+instance YamlSchema Int8 where
+  yamlSchema = boundedIntegerSchema
+
+instance YamlSchema Int16 where
+  yamlSchema = boundedIntegerSchema
+
+instance YamlSchema Int32 where
+  yamlSchema = boundedIntegerSchema
+
+instance YamlSchema Int64 where
+  yamlSchema = boundedIntegerSchema
+
+instance YamlSchema Word where
+  yamlSchema = boundedIntegerSchema
+
+instance YamlSchema Word8 where
+  yamlSchema = boundedIntegerSchema
+
+instance YamlSchema Word16 where
+  yamlSchema = boundedIntegerSchema
+
+instance YamlSchema Word32 where
+  yamlSchema = boundedIntegerSchema
+
+instance YamlSchema Word64 where
+  yamlSchema = boundedIntegerSchema
+
+boundedIntegerSchema :: (Integral i, Bounded i) => YamlParser i
+boundedIntegerSchema = ParseMaybe toBoundedInteger $ ParseNumber Nothing ParseAny
 
 instance YamlSchema Yaml.Object where
   yamlSchema = ParseObject Nothing ParseAny

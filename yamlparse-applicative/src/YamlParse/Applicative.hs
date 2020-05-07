@@ -26,7 +26,7 @@
 --
 -- > instance YamlSchema Configuration
 -- >   yamlSchema =
--- >     object $ -- Declare that it is a Yaml object
+-- >     objectParser $ -- Declare that it is a Yaml object
 -- >       Configuration
 -- >         <$> optionalField -- An optional key may be in the file
 -- >             "url"
@@ -66,14 +66,14 @@
 -- > argParser =
 -- >   info
 -- >     (helper <$> parseSomethingElse)
--- >     (confDesc (yamlSchema :: YamlParser Configuration))
+-- >     (confDesc @Configuration)
 module YamlParse.Applicative
   ( -- * The YamlSchema Class
     YamlSchema (..),
 
     -- ** Implementing YamlSchema instances
-    object,
-    unnamedObject,
+    objectParser,
+    unnamedObjectParser,
     (<?>),
     (<??>),
     requiredField,
@@ -88,6 +88,7 @@ module YamlParse.Applicative
     optionalFieldWithDefault',
     optionalFieldWithDefaultWith,
     optionalFieldWithDefaultWith',
+    viaRead,
     literalString,
     literalValue,
     literalShowValue,

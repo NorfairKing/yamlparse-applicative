@@ -4,14 +4,14 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 72bba9feb59fa2b1aef61e4e3635c7c9207ae71efc32a9c32ea08edbd5c827d2
+-- hash: d7a4951aa1cb84b57208a97ecebcb625f1fcdb73a6dfdece44e53a38f30176a9
 
 name:           yamlparse-applicative
 version:        0.0.0.0
 synopsis:       Declaritive configuration parsing with free docs
 description:    See https://github.com/NorfairKing/yamlparse-applicative
-homepage:       https://github.com/NorfairKing/confparse#readme
-bug-reports:    https://github.com/NorfairKing/confparse/issues
+homepage:       https://github.com/NorfairKing/yamlparse-applicative#readme
+bug-reports:    https://github.com/NorfairKing/yamlparse-applicative/issues
 author:         Tom Sydney Kerckhove
 maintainer:     syd@cs-syd.eu
 copyright:      2020 Tom Sydney Kerckhove
@@ -20,7 +20,7 @@ build-type:     Simple
 
 source-repository head
   type: git
-  location: https://github.com/NorfairKing/confparse
+  location: https://github.com/NorfairKing/yamlparse-applicative
 
 library
   exposed-modules:

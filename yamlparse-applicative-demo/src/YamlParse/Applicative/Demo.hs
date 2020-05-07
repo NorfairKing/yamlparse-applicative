@@ -25,7 +25,7 @@ data MyConfig
 
 instance YamlSchema MyConfig where
   yamlSchema =
-    object "MyConfig" $
+    objectParser "MyConfig" $
       MyConfig
         <$> requiredField "foo" "My foo"
         <*> optionalField "bar" "My bar"
@@ -43,7 +43,7 @@ data MySubConfig
 
 instance YamlSchema MySubConfig where
   yamlSchema =
-    object "MySubConfig" $
+    objectParser "MySubConfig" $
       MySubConfig
         <$> optionalField "foofoo" "My foofoo"
         <*> optionalFieldWithDefault "barbar" "defaultTextHere" "My bar"
