@@ -1,13 +1,7 @@
 # Yamlparse applicative
 
-DOESN'T ACTUALLY WORK YET.
-
 Parse YAML config files like optparse-applicative.
 Get both the documentation and the parsing from one value.
-
-See also https://github.com/chrisdone/streaming-parsers for related work.
-
-
 
 ## Example
 
@@ -47,3 +41,7 @@ quux: # optional, default: []
   - # My quux docs
     <bool>
 ```
+
+## Related work
+
+Chris done has made something like this with a focus on security instead of a focus on documentation: https://github.com/chrisdone/streaming-parsers
