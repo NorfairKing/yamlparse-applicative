@@ -69,10 +69,25 @@ instance YamlSchema MySubConfig where
 -- Note that you do not have to use this class and can just use your own parser values.
 -- Note also that the parsing of a type of this class should correspond to the parsing of the type in the FromJSON class.
 class YamlSchema a where
+  {-# MINIMAL yamlSchema #-}
   yamlSchema :: YamlParser a
+  yamlSchemaList :: YamlParser [a]
+  yamlSchemaList = V.toList <$> ParseArray Nothing (ParseList yamlSchema)
 
 instance YamlSchema Bool where
   yamlSchema = ParseBool Nothing ParseAny
+
+instance YamlSchema Char where
+  yamlSchema =
+    ParseString Nothing $
+      ParseMaybe
+        ( \cs -> case T.unpack cs of
+            [] -> Nothing
+            [c] -> Just c
+            _ -> Nothing
+        )
+        ParseAny
+  yamlSchemaList = T.unpack <$> yamlSchema
 
 instance YamlSchema Text where
   yamlSchema = ParseString Nothing ParseAny
@@ -90,7 +105,7 @@ instance YamlSchema a => YamlSchema (Vector a) where
   yamlSchema = ParseArray Nothing (ParseList yamlSchema)
 
 instance YamlSchema a => YamlSchema [a] where
-  yamlSchema = V.toList <$> ParseArray Nothing (ParseList yamlSchema)
+  yamlSchema = yamlSchemaList
 
 -- | A parser for a required field at a given key
 requiredField :: YamlSchema a => Text -> Text -> ObjectParser a
@@ -151,6 +166,10 @@ type ObjectParser a = Parser Yaml.Object a
 data Parser i o where
   -- | Return the input
   ParseAny :: Parser i i
+  -- | Parse via a parser function
+  ParseMaybe :: (o -> Maybe u) -> Parser i o -> Parser i u
+  -- | Match an exact value
+  ParseEq :: (Show o, Eq o) => o -> Parser i o -> Parser i o
   -- | Parse a boolean value
   ParseBool :: Maybe Text -> Parser Bool o -> Parser Yaml.Value o
   -- | Parse a String value
@@ -232,6 +251,17 @@ object name = ParseObject (Just name)
 unnamedObject :: ObjectParser o -> YamlParser o
 unnamedObject = ParseObject Nothing
 
+-- | Declare a parser for an exact string.
+--
+-- You can use this to parse a constructor in an enum for example:
+--
+-- > data Fruit = Apple | Banana
+-- >
+-- > instance YamlSchema Fruit where
+-- >   yamlSchema = Apple <$ literalString "Apple" < Banana <$ literalString "Banana"
+literalString :: Text -> YamlParser Text
+literalString t = ParseString Nothing $ ParseEq t ParseAny
+
 -- | Add a comment to a parser
 -- This info will be used in the schema for documentation.
 (<?>) :: Parser i a -> Text -> Parser i a
@@ -246,6 +276,14 @@ implementParser = go
     go :: Parser i o -> (i -> Yaml.Parser o)
     go = \case
       ParseAny -> pure
+      ParseEq v p -> \i -> do
+        r <- go p i
+        if r == v then pure r else fail $ "Expected " <> show v <> " exactly but got: " <> show r
+      ParseMaybe mf p -> \i -> do
+        o <- go p i
+        case mf o of
+          Nothing -> fail "Parsing failed"
+          Just u -> pure u
       ParseBool t p -> Yaml.withBool (maybe "Bool" T.unpack t) $ go p
       ParseString t p -> Yaml.withText (maybe "String" T.unpack t) $ go p
       ParseNumber t p -> Yaml.withScientific (maybe "Number" T.unpack t) $ go p
@@ -282,6 +320,8 @@ explainParser = go
     go :: Parser i o -> Maybe Schema
     go = \case
       ParseAny -> Just AnySchema
+      ParseMaybe _ p -> go p
+      ParseEq e _ -> Just $ ExactSchema (T.pack (show e))
       ParseBool t _ -> Just $ BoolSchema t
       ParseNumber t _ -> Just $ NumberSchema t
       ParseString t _ -> Just $ StringSchema t
@@ -303,6 +343,7 @@ explainParser = go
 -- This is used to produce documentation for what/how the parser parses.
 data Schema
   = AnySchema
+  | ExactSchema Text
   | BoolSchema (Maybe Text)
   | NumberSchema (Maybe Text)
   | StringSchema (Maybe Text)
@@ -368,6 +409,7 @@ schemaDoc = go emptyComments
               Just cd -> vsep [cd, s]
        in \case
             AnySchema -> e "<any>" cs
+            ExactSchema t -> e (pretty t) cs
             BoolSchema t -> e "<bool>" $ addMComment cs t
             NumberSchema t -> e "<number>" $ addMComment cs t
             StringSchema t -> e "<string>" $ addMComment cs t

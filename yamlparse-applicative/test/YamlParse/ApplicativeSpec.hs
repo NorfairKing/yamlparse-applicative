@@ -5,7 +5,7 @@
 module YamlParse.ApplicativeSpec where
 
 import qualified Data.Aeson.Types as Aeson
-import Data.GenValidity.Aeson
+import Data.GenValidity.Aeson ()
 import Data.Scientific (Scientific)
 import Data.Text (Text)
 import Data.Typeable
@@ -19,6 +19,8 @@ spec :: Spec
 spec =
   describe "implementParser" $ do
     implementationsSpec @Bool
+    implementationsSpec @Char
+    implementationsSpec @String
     implementationsSpec @Text
     implementationsSpec @Scientific
     implementationsSpec @Aeson.Array
@@ -34,10 +36,10 @@ implementationsSpec ::
     GenValid a,
     Aeson.FromJSON a,
     Aeson.ToJSON a,
-    FromYamlSchema a
+    YamlSchema a
   ) =>
   Spec
-implementationsSpec = specify ("The implementation of 'parseJSON' matches the implementation of 'implementParser fromYamlSchema' for " <> nameOf @a) $ implementationsMatch @a
+implementationsSpec = specify ("The implementation of 'parseJSON' matches the implementation of 'implementParser yamlSchema' for " <> nameOf @a) $ implementationsMatch @a
 
 implementationsMatch ::
   forall a.
@@ -46,7 +48,7 @@ implementationsMatch ::
     GenValid a,
     Aeson.FromJSON a,
     Aeson.ToJSON a,
-    FromYamlSchema a
+    YamlSchema a
   ) =>
   Property
 implementationsMatch =
@@ -54,5 +56,5 @@ implementationsMatch =
     \a -> do
       let v = Aeson.toJSON (a :: a)
       let aesonResult = Aeson.parseEither Aeson.parseJSON v :: Either String a
-          yamlResult = Aeson.parseEither (implementParser fromYamlSchema) v
+          yamlResult = Aeson.parseEither (implementParser yamlSchema) v
       yamlResult `shouldBe` aesonResult
