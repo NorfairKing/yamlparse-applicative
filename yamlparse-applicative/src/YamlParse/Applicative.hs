@@ -8,9 +8,6 @@
 
 module YamlParse.Applicative where
 
--- import Data.HashMap.Strict (HashMap)
--- import qualified Data.HashMap.Strict as HM
-
 import Control.Applicative
 import Control.Monad
 import Data.Maybe
@@ -21,7 +18,7 @@ import qualified Data.Text.IO as T
 import Data.Text.Prettyprint.Doc
 import Data.Text.Prettyprint.Doc.Render.Text
 import Data.Validity
-import Data.Validity.Text
+import Data.Validity.Text ()
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 import qualified Data.Yaml as Yaml
@@ -46,10 +43,10 @@ instance FromYamlSchema MyConfig where
   fromYamlSchema =
     object "MyConfig" $
       MyConfig
-        <$> requiredField "foo"
-        <*> optionalField "bar"
-        <*> optionalFieldWithDefault "quux" []
-        <*> optionalField "sub"
+        <$> requiredField "foo" "My foo"
+        <*> optionalField "bar" "My bar"
+        <*> optionalFieldWithDefault "quux" [] "My quux"
+        <*> optionalField "sub" "My sub"
 
 data MySubConfig
   = MySubConfig
@@ -63,9 +60,9 @@ instance FromYamlSchema MySubConfig where
   fromYamlSchema =
     object "MySubConfig" $
       MySubConfig
-        <$> optionalField "foofoo"
-        <*> optionalFieldWithDefault "barbar" "defaultTextHere"
-        <*> (Left <$> (requiredField "left") <|> Right <$> (requiredField "right"))
+        <$> optionalField "foofoo" "My foofoo"
+        <*> optionalFieldWithDefault "barbar" "defaultTextHere" "My bar"
+        <*> (Left <$> (requiredField "left" "The left case") <|> Right <$> (requiredField "right" "The right case"))
 
 -- | A class of types for which a schema is defined.
 --
@@ -96,30 +93,56 @@ instance FromYamlSchema a => FromYamlSchema [a] where
   fromYamlSchema = V.toList <$> ParseArray Nothing (ParseList fromYamlSchema)
 
 -- | A parser for a required field at a given key
-requiredField :: FromYamlSchema a => Text -> ObjectParser a
-requiredField k = requiredFieldWith k fromYamlSchema
+requiredField :: FromYamlSchema a => Text -> Text -> ObjectParser a
+requiredField k h = requiredFieldWith k h fromYamlSchema
+
+-- | A parser for a required field at a given key without a help text
+requiredField' :: FromYamlSchema a => Text -> ObjectParser a
+requiredField' k = requiredFieldWith' k fromYamlSchema
 
 -- | A parser for a required field at a given key with a parser for what is found at that key
-requiredFieldWith :: Text -> YamlParser a -> ObjectParser a
-requiredFieldWith k func = ParseField k $ FieldParserRequired func
+requiredFieldWith :: Text -> Text -> YamlParser a -> ObjectParser a
+requiredFieldWith k h func = ParseComment h $ ParseField k $ FieldParserRequired func
+
+-- | A parser for a required field at a given key with a parser for what is found at that key without a help text
+requiredFieldWith' :: Text -> YamlParser a -> ObjectParser a
+requiredFieldWith' k func = ParseField k $ FieldParserRequired func
 
 -- | A parser for an optional field at a given key
-optionalField :: FromYamlSchema a => Text -> ObjectParser (Maybe a)
-optionalField k = optionalFieldWith k fromYamlSchema
+optionalField :: FromYamlSchema a => Text -> Text -> ObjectParser (Maybe a)
+optionalField k h = optionalFieldWith k h fromYamlSchema
+
+-- | A parser for an optional field at a given key without a help text
+optionalField' :: FromYamlSchema a => Text -> ObjectParser (Maybe a)
+optionalField' k = optionalFieldWith' k fromYamlSchema
 
 -- | A parser for an optional field at a given key with a parser for what is found at that key
-optionalFieldWith :: Text -> YamlParser a -> ObjectParser (Maybe a)
-optionalFieldWith k func = ParseField k $ FieldParserOptional func
+optionalFieldWith :: Text -> Text -> YamlParser a -> ObjectParser (Maybe a)
+optionalFieldWith k h func = ParseComment h $ ParseField k $ FieldParserOptional func
+
+-- | A parser for an optional field at a given key with a parser for what is found at that key without a help text
+optionalFieldWith' :: Text -> YamlParser a -> ObjectParser (Maybe a)
+optionalFieldWith' k func = ParseField k $ FieldParserOptional func
 
 -- | A parser for an optional field at a given key with a default value
-optionalFieldWithDefault :: (Show a, FromYamlSchema a) => Text -> a -> ObjectParser a
-optionalFieldWithDefault k d = optionalFieldWithDefaultWith k d fromYamlSchema
+optionalFieldWithDefault :: (Show a, FromYamlSchema a) => Text -> a -> Text -> ObjectParser a
+optionalFieldWithDefault k d h = optionalFieldWithDefaultWith k d h fromYamlSchema
+
+-- | A parser for an optional field at a given key with a default value without a help text
+optionalFieldWithDefault' :: (Show a, FromYamlSchema a) => Text -> a -> ObjectParser a
+optionalFieldWithDefault' k d = optionalFieldWithDefaultWith' k d fromYamlSchema
 
 -- | A parser for an optional field at a given key with a default value and a parser for what is found at that key
 --
 -- For the sake of documentation, the default value needs to be showable.
-optionalFieldWithDefaultWith :: Show a => Text -> a -> YamlParser a -> ObjectParser a
-optionalFieldWithDefaultWith k d func = ParseField k $ FieldParserOptionalWithDefault func d
+optionalFieldWithDefaultWith :: Show a => Text -> a -> Text -> YamlParser a -> ObjectParser a
+optionalFieldWithDefaultWith k d h func = ParseComment h $ ParseField k $ FieldParserOptionalWithDefault func d
+
+-- | A parser for an optional field at a given key with a default value and a parser for what is found at that key without a help text
+--
+-- For the sake of documentation, the default value needs to be showable.
+optionalFieldWithDefaultWith' :: Show a => Text -> a -> YamlParser a -> ObjectParser a
+optionalFieldWithDefaultWith' k d func = ParseField k $ FieldParserOptionalWithDefault func d
 
 type YamlParser a = Parser Yaml.Value a
 
@@ -365,7 +388,7 @@ schemaDoc = go emptyComments
                         Just d -> "optional, default:" <+> pretty d
                in vsep
                     [ keyDoc <> ":" <+> mkComment requiredDoc,
-                      indent 2 $ e (g s) cs
+                      indent 2 $ g s
                     ]
             ApSchema s1 s2 -> align $ vsep [g s1, g s2]
             AltSchema ss ->
