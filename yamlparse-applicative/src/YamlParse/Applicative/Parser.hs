@@ -68,8 +68,8 @@ data Parser i o where
     Parser Yaml.Array (Vector o)
   -- | Parse a field of an object
   ParseField ::
-    Text ->
     -- | The key of the field
+    Text ->
     FieldParser o ->
     Parser Yaml.Object o
   -- | A pure value
