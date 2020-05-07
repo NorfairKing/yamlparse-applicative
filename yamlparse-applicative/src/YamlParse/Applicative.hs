@@ -283,7 +283,9 @@ literalValue v = v <$ ParseEq (Yaml.toJSON v) (TE.decodeUtf8 $ LB.toStrict $ JSO
 
 -- | Use the first parser of the given list that succeeds
 --
--- You can use this to parse a constructor in an enum for example:
+-- You can use this to parse a constructor in an enum.
+--
+-- For example:
 --
 -- > data Fruit = Apple | Banana | Melon
 -- >
@@ -297,12 +299,32 @@ alternatives :: [Parser i o] -> Parser i o
 alternatives = ParseAlt
 
 -- | Add a comment to a parser
+--
 -- This info will be used in the schema for documentation.
+--
+-- For example:
+--
+-- > data Result = Error | Ok
+-- > instance YamlSchema Result where
+-- >   yamlSchema = alternatives
+-- >     [ Error <$ literalString "Error" <?> "An error"
+-- >     , Ok <$ literalString "Ok" <?> "Oll Klear"
+-- >     ]
 (<?>) :: Parser i a -> Text -> Parser i a
 (<?>) = flip ParseComment
 
 -- | Add a list of lines of comments to a parser
+--
 -- This info will be used in the schema for documentation.
+--
+-- For example:
+--
+-- > data Result = Error | Ok
+-- > instance YamlSchema Result where
+-- >   yamlSchema = alternatives
+-- >     [ Error <$ literalString "Error" <??> ["Just an error", "but I've got a lot to say about this"]
+-- >     , Ok <$ literalString "Ok" <??> ["Oll Klear", "I really don't know where 'OK' comes from?!"]
+-- >     ]
 (<??>) :: Parser i a -> [Text] -> Parser i a
 (<??>) p ts = p <?> T.unlines ts
 
