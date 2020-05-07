@@ -68,13 +68,58 @@
 -- >     (helper <$> parseSomethingElse)
 -- >     (confDesc (yamlSchema :: YamlParser Configuration))
 module YamlParse.Applicative
-  ( module YamlParse.Applicative.Parser,
-    module YamlParse.Applicative.Class,
-    module YamlParse.Applicative.Pretty,
-    module YamlParse.Applicative.IO,
-    module YamlParse.Applicative.OptParse,
-    module YamlParse.Applicative.Implement,
-    module YamlParse.Applicative.Explain,
+  ( -- * The YamlSchema Class
+    YamlSchema (..),
+
+    -- ** Implementing YamlSchema instances
+    object,
+    unnamedObject,
+    (<?>),
+    (<??>),
+    requiredField,
+    requiredField',
+    requiredFieldWith,
+    requiredFieldWith',
+    optionalField,
+    optionalField',
+    optionalFieldWith,
+    optionalFieldWith',
+    optionalFieldWithDefault,
+    optionalFieldWithDefault',
+    optionalFieldWithDefaultWith,
+    optionalFieldWithDefaultWith',
+    literalString,
+    literalValue,
+    literalShowValue,
+    alternatives,
+
+    -- * Parser
+    YamlParser,
+    ObjectParser,
+    Parser (..),
+
+    -- * Using a yaml schema
+
+    -- ** Parsing Yaml via a YamlSchema instance
+    viaYamlSchema,
+    ViaYamlSchema (..),
+
+    -- ** Getting a parser implemntation from a 'Parser'
+    implementParser,
+
+    -- * Documentation for a 'Parser'
+    explainParser,
+    Schema (..),
+
+    -- ** Showing the schema to the user
+    prettySchema,
+
+    -- * Interface with 'optparse-applicative'
+    confDesc,
+
+    -- * Parsing a file
+    readConfigFile,
+    readFirstConfigFile,
   )
 where
 

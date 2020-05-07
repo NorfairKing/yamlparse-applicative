@@ -16,6 +16,9 @@ import Data.Validity.Text ()
 import Data.Vector (Vector)
 import qualified Data.Yaml as Yaml
 
+-- | A parser that takes values of type 'i' as input and parses them into values of type 'o'
+--
+-- Note that there is no 'Monad' instance.
 data Parser i o where
   -- | Return the input
   ParseAny :: Parser i i

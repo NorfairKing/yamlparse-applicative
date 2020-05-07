@@ -23,7 +23,15 @@ import YamlParse.Applicative.Parser
 -- Note also that the parsing of a type of this class should correspond to the parsing of the type in the FromJSON class.
 class YamlSchema a where
   {-# MINIMAL yamlSchema #-}
+
+  -- | A yamlschema for one value
+  --
+  -- See the sections on helper functions for implementing this for plenty of examples.
   yamlSchema :: YamlParser a
+
+  -- | A yamlschema for a list of values
+  --
+  -- This is really only useful for cases like 'Char' and 'String'
   yamlSchemaList :: YamlParser [a]
   yamlSchemaList = V.toList <$> ParseArray Nothing (ParseList yamlSchema)
 
@@ -60,27 +68,27 @@ instance YamlSchema a => YamlSchema (Vector a) where
 instance YamlSchema a => YamlSchema [a] where
   yamlSchema = yamlSchemaList
 
--- | A parser for a required field at a given key
+-- | A parser for a required field in an object at a given key
 requiredField :: YamlSchema a => Text -> Text -> ObjectParser a
 requiredField k h = requiredFieldWith k h yamlSchema
 
--- | A parser for a required field at a given key without a help text
+-- | A parser for a required field in an object at a given key without a help text
 requiredField' :: YamlSchema a => Text -> ObjectParser a
 requiredField' k = requiredFieldWith' k yamlSchema
 
--- | A parser for an optional field at a given key
+-- | A parser for an optional field in an object at a given key
 optionalField :: YamlSchema a => Text -> Text -> ObjectParser (Maybe a)
 optionalField k h = optionalFieldWith k h yamlSchema
 
--- | A parser for an optional field at a given key without a help text
+-- | A parser for an optional field in an object at a given key without a help text
 optionalField' :: YamlSchema a => Text -> ObjectParser (Maybe a)
 optionalField' k = optionalFieldWith' k yamlSchema
 
--- | A parser for an optional field at a given key with a default value
+-- | A parser for an optional field in an object at a given key with a default value
 optionalFieldWithDefault :: (Show a, YamlSchema a) => Text -> a -> Text -> ObjectParser a
 optionalFieldWithDefault k d h = optionalFieldWithDefaultWith k d h yamlSchema
 
--- | A parser for an optional field at a given key with a default value without a help text
+-- | A parser for an optional field in an object at a given key with a default value without a help text
 optionalFieldWithDefault' :: (Show a, YamlSchema a) => Text -> a -> ObjectParser a
 optionalFieldWithDefault' k d = optionalFieldWithDefaultWith' k d yamlSchema
 
@@ -95,6 +103,9 @@ viaYamlSchema = implementParser yamlSchema
 -- > case Data.Yaml.decodeEither' contents of
 -- >   Left e -> die $ show e
 -- >   Right (ViaYamlSchema res) -> print res
+--
+-- This only helps you when you really don't want to implement a 'FromJSON' instance.
+-- See 'viaYamlSchema' if you do.
 newtype ViaYamlSchema a = ViaYamlSchema a
   deriving (Show, Eq, Generic)
 
