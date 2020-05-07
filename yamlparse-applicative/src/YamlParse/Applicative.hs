@@ -27,7 +27,7 @@ import GHC.Generics (Generic)
 someFunc :: IO ()
 someFunc = do
   forM_
-    (explainParser (fromYamlSchema :: YamlParser MyConfig))
+    (explainParser (yamlSchema :: YamlParser MyConfig))
     $ T.putStrLn . prettySchema
 
 data MyConfig
@@ -39,8 +39,8 @@ data MyConfig
       }
   deriving (Show, Eq)
 
-instance FromYamlSchema MyConfig where
-  fromYamlSchema =
+instance YamlSchema MyConfig where
+  yamlSchema =
     object "MyConfig" $
       MyConfig
         <$> requiredField "foo" "My foo"
@@ -56,8 +56,8 @@ data MySubConfig
       }
   deriving (Show, Eq)
 
-instance FromYamlSchema MySubConfig where
-  fromYamlSchema =
+instance YamlSchema MySubConfig where
+  yamlSchema =
     object "MySubConfig" $
       MySubConfig
         <$> optionalField "foofoo" "My foofoo"
@@ -68,37 +68,37 @@ instance FromYamlSchema MySubConfig where
 --
 -- Note that you do not have to use this class and can just use your own parser values.
 -- Note also that the parsing of a type of this class should correspond to the parsing of the type in the FromJSON class.
-class FromYamlSchema a where
-  fromYamlSchema :: YamlParser a
+class YamlSchema a where
+  yamlSchema :: YamlParser a
 
-instance FromYamlSchema Bool where
-  fromYamlSchema = ParseBool Nothing ParseAny
+instance YamlSchema Bool where
+  yamlSchema = ParseBool Nothing ParseAny
 
-instance FromYamlSchema Text where
-  fromYamlSchema = ParseString Nothing ParseAny
+instance YamlSchema Text where
+  yamlSchema = ParseString Nothing ParseAny
 
-instance FromYamlSchema Scientific where
-  fromYamlSchema = ParseNumber Nothing ParseAny
+instance YamlSchema Scientific where
+  yamlSchema = ParseNumber Nothing ParseAny
 
-instance FromYamlSchema Yaml.Object where
-  fromYamlSchema = ParseObject Nothing ParseAny
+instance YamlSchema Yaml.Object where
+  yamlSchema = ParseObject Nothing ParseAny
 
-instance FromYamlSchema Yaml.Value where
-  fromYamlSchema = ParseAny
+instance YamlSchema Yaml.Value where
+  yamlSchema = ParseAny
 
-instance FromYamlSchema a => FromYamlSchema (Vector a) where
-  fromYamlSchema = ParseArray Nothing (ParseList fromYamlSchema)
+instance YamlSchema a => YamlSchema (Vector a) where
+  yamlSchema = ParseArray Nothing (ParseList yamlSchema)
 
-instance FromYamlSchema a => FromYamlSchema [a] where
-  fromYamlSchema = V.toList <$> ParseArray Nothing (ParseList fromYamlSchema)
+instance YamlSchema a => YamlSchema [a] where
+  yamlSchema = V.toList <$> ParseArray Nothing (ParseList yamlSchema)
 
 -- | A parser for a required field at a given key
-requiredField :: FromYamlSchema a => Text -> Text -> ObjectParser a
-requiredField k h = requiredFieldWith k h fromYamlSchema
+requiredField :: YamlSchema a => Text -> Text -> ObjectParser a
+requiredField k h = requiredFieldWith k h yamlSchema
 
 -- | A parser for a required field at a given key without a help text
-requiredField' :: FromYamlSchema a => Text -> ObjectParser a
-requiredField' k = requiredFieldWith' k fromYamlSchema
+requiredField' :: YamlSchema a => Text -> ObjectParser a
+requiredField' k = requiredFieldWith' k yamlSchema
 
 -- | A parser for a required field at a given key with a parser for what is found at that key
 requiredFieldWith :: Text -> Text -> YamlParser a -> ObjectParser a
@@ -109,12 +109,12 @@ requiredFieldWith' :: Text -> YamlParser a -> ObjectParser a
 requiredFieldWith' k func = ParseField k $ FieldParserRequired func
 
 -- | A parser for an optional field at a given key
-optionalField :: FromYamlSchema a => Text -> Text -> ObjectParser (Maybe a)
-optionalField k h = optionalFieldWith k h fromYamlSchema
+optionalField :: YamlSchema a => Text -> Text -> ObjectParser (Maybe a)
+optionalField k h = optionalFieldWith k h yamlSchema
 
 -- | A parser for an optional field at a given key without a help text
-optionalField' :: FromYamlSchema a => Text -> ObjectParser (Maybe a)
-optionalField' k = optionalFieldWith' k fromYamlSchema
+optionalField' :: YamlSchema a => Text -> ObjectParser (Maybe a)
+optionalField' k = optionalFieldWith' k yamlSchema
 
 -- | A parser for an optional field at a given key with a parser for what is found at that key
 optionalFieldWith :: Text -> Text -> YamlParser a -> ObjectParser (Maybe a)
@@ -125,12 +125,12 @@ optionalFieldWith' :: Text -> YamlParser a -> ObjectParser (Maybe a)
 optionalFieldWith' k func = ParseField k $ FieldParserOptional func
 
 -- | A parser for an optional field at a given key with a default value
-optionalFieldWithDefault :: (Show a, FromYamlSchema a) => Text -> a -> Text -> ObjectParser a
-optionalFieldWithDefault k d h = optionalFieldWithDefaultWith k d h fromYamlSchema
+optionalFieldWithDefault :: (Show a, YamlSchema a) => Text -> a -> Text -> ObjectParser a
+optionalFieldWithDefault k d h = optionalFieldWithDefaultWith k d h yamlSchema
 
 -- | A parser for an optional field at a given key with a default value without a help text
-optionalFieldWithDefault' :: (Show a, FromYamlSchema a) => Text -> a -> ObjectParser a
-optionalFieldWithDefault' k d = optionalFieldWithDefaultWith' k d fromYamlSchema
+optionalFieldWithDefault' :: (Show a, YamlSchema a) => Text -> a -> ObjectParser a
+optionalFieldWithDefault' k d = optionalFieldWithDefaultWith' k d yamlSchema
 
 -- | A parser for an optional field at a given key with a default value and a parser for what is found at that key
 --
