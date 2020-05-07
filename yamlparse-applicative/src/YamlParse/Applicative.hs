@@ -11,13 +11,16 @@ module YamlParse.Applicative where
 
 import Control.Applicative
 import Control.Monad
+import qualified Data.Aeson as JSON
 import qualified Data.Aeson as Aeson
 import qualified Data.Aeson.Types as Aeson
 import qualified Data.ByteString as SB
+import qualified Data.ByteString.Lazy as LB
 import Data.Maybe
 import Data.Scientific
 import qualified Data.Text as T
 import Data.Text (Text)
+import qualified Data.Text.Encoding as TE
 import Data.Text.Prettyprint.Doc
 import Data.Text.Prettyprint.Doc.Render.Text
 import Data.Validity
@@ -137,7 +140,13 @@ data Parser i o where
   -- | Parse via a parser function
   ParseMaybe :: (o -> Maybe u) -> Parser i o -> Parser i u
   -- | Match an exact value
-  ParseEq :: (Show o, Eq o) => o -> Parser i o -> Parser i o
+  ParseEq ::
+    (Show o, Eq o) =>
+    o ->
+    -- | Shown version of the o in the previous argument
+    Text ->
+    Parser i o ->
+    Parser i o
   -- | Parse a boolean value
   ParseBool :: Maybe Text -> Parser Bool o -> Parser Yaml.Value o
   -- | Parse a String value
@@ -228,13 +237,15 @@ unnamedObject = ParseObject Nothing
 -- > instance YamlSchema Fruit where
 -- >   yamlSchema = Apple <$ literalString "Apple" <|> Banana <$ literalString "Banana"
 literalString :: Text -> YamlParser Text
-literalString t = ParseString Nothing $ ParseEq t ParseAny
+literalString t = ParseString Nothing $ ParseEq t t ParseAny
 
 -- | Declare a parser for a value using its show instance
 --
 -- Note that no value is read. The parsed string is just compared to the shown given value.
 --
--- You can use this to parse a constructor in an enum for example:
+-- You can use this to parse a constructor in an enum when it has a 'Show' instance.
+--
+-- For example:
 --
 -- > data Fruit = Apple | Banana | Melon
 -- >   deriving (Show, Eq)
@@ -247,6 +258,28 @@ literalString t = ParseString Nothing $ ParseEq t ParseAny
 -- >      ]
 literalShowValue :: Show a => a -> YamlParser a
 literalShowValue v = v <$ literalString (T.pack $ show v)
+
+-- | Declare a parser for a value using its show instance
+--
+-- Note that no value is read. The parsed string is just compared to the shown given value.
+--
+-- You can use this to parse a constructor in an enum when it has a 'ToJSON' instance.
+--
+-- For example
+--
+-- > data Fruit = Apple | Banana | Melon
+-- >   deriving (Eq, Generic)
+-- >
+-- > instance ToJSON Fruit
+-- >
+-- > instance YamlSchema Fruit where
+-- >   yamlSchema = alternatives
+-- >      [ literalValue Apple
+-- >      , literalValue Banana
+-- >      , literalValue Melon
+-- >      ]
+literalValue :: Yaml.ToJSON a => a -> YamlParser a
+literalValue v = v <$ ParseEq (Yaml.toJSON v) (TE.decodeUtf8 $ LB.toStrict $ JSON.encode v) ParseAny
 
 -- | Use the first parser of the given list that succeeds
 --
@@ -282,19 +315,41 @@ implementParser = go
     go :: Parser i o -> (i -> Yaml.Parser o)
     go = \case
       ParseAny -> pure
-      ParseEq v p -> \i -> do
+      ParseEq v t p -> \i -> do
         r <- go p i
-        if r == v then pure r else fail $ "Expected " <> show v <> " exactly but got: " <> show r
+        if r == v then pure r else fail $ "Expected " <> T.unpack t <> " exactly but got: " <> show r
       ParseMaybe mf p -> \i -> do
         o <- go p i
         case mf o of
           Nothing -> fail "Parsing failed"
           Just u -> pure u
-      ParseBool t p -> Yaml.withBool (maybe "Bool" T.unpack t) $ go p
-      ParseString t p -> Yaml.withText (maybe "String" T.unpack t) $ go p
-      ParseNumber t p -> Yaml.withScientific (maybe "Number" T.unpack t) $ go p
+      -- We can't just do 'withBool (maybe "Bool" T.unpack mt)' because then there is an extra context in the error message.
+      ParseBool mt p -> case mt of
+        Just t -> Yaml.withBool (T.unpack t) $ go p
+        Nothing -> \v -> case v of
+          Yaml.Bool o -> go p o
+          _ -> Aeson.typeMismatch "Bool" v
+      ParseString mt p -> case mt of
+        Just t -> Yaml.withText (T.unpack t) $ go p
+        Nothing -> \v -> case v of
+          Yaml.String o -> go p o
+          _ -> Aeson.typeMismatch "String" v
+      ParseNumber mt p -> case mt of
+        Just t -> Yaml.withScientific (T.unpack t) $ go p
+        Nothing -> \v -> case v of
+          Yaml.Number o -> go p o
+          _ -> Aeson.typeMismatch "Number" v
+      ParseArray mt p -> case mt of
+        Just t -> Yaml.withArray (T.unpack t) $ go p
+        Nothing -> \v -> case v of
+          Yaml.Array o -> go p o
+          _ -> Aeson.typeMismatch "Array" v
+      ParseObject mt p -> case mt of
+        Just t -> Yaml.withObject (T.unpack t) $ go p
+        Nothing -> \v -> case v of
+          Yaml.Object o -> go p o
+          _ -> Aeson.typeMismatch "Object" v
       ParseList p -> \l -> forM l $ \v -> go p v
-      ParseArray t p -> Yaml.withArray (maybe "Array" T.unpack t) $ go p
       ParseField key fp -> \o -> case fp of
         FieldParserRequired p -> do
           v <- o Yaml..: key
@@ -309,7 +364,6 @@ implementParser = go
           case mv of
             Nothing -> pure d
             Just v -> go p v Aeson.<?> Aeson.Key key
-      ParseObject t p -> Yaml.withObject (maybe "Object" T.unpack t) $ go p
       ParsePure v -> const $ pure v
       ParseAp pf p -> \v -> go pf v <*> go p v
       ParseAlt ps -> \v -> case ps of
@@ -329,7 +383,7 @@ explainParser = go
     go = \case
       ParseAny -> Just AnySchema
       ParseMaybe _ p -> go p
-      ParseEq e _ -> Just $ ExactSchema (T.pack (show e))
+      ParseEq _ t _ -> Just $ ExactSchema t
       ParseBool t _ -> Just $ BoolSchema t
       ParseNumber t _ -> Just $ NumberSchema t
       ParseString t ParseAny -> Just $ StringSchema t
