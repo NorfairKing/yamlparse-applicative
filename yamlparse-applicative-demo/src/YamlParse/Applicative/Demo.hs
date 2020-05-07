@@ -1,14 +1,12 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Main where
+module YamlParse.Applicative.Demo where
 
 import Control.Applicative
 import Control.Monad
 import Data.Scientific
 import Data.Text (Text)
 import qualified Data.Text.IO as T
-import GHC.Generics (Generic)
 import YamlParse.Applicative
 
 main :: IO ()
@@ -54,7 +52,7 @@ instance YamlSchema MySubConfig where
         <*> (Left <$> (requiredField "left" "The left case") <|> Right <$> (requiredField "right" "The right case"))
 
 data Fruit = Apple | Banana | Melon
-  deriving (Show, Generic)
+  deriving (Show)
 
 instance YamlSchema Fruit where
   yamlSchema =

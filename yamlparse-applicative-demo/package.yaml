@@ -1,0 +1,30 @@
+name:                yamlparse-applicative-demo
+version:             0.0.0.0
+github:              "NorfairKing/confparse"
+license:             AllRightsReserved
+author:              "Tom Sydney Kerckhove"
+maintainer:          "syd@cs-syd.eu"
+copyright:           "2020 Tom Sydney Kerckhove"
+
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+  dependencies:
+  - aeson
+  - scientific
+  - text
+  - yamlparse-applicative
+
+executables:
+  yamlparse-applicative-demo:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - yamlparse-applicative-demo

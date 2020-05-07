@@ -1,8 +1,10 @@
-resolver: lts-15.11
+resolver: lts-15.10
 packages:
 - yamlparse-applicative
+- yamlparse-applicative-demo
 
 nix:
+  path: [ "nixpkgs=(import ./nix/pkgs.nix)" ]
   add-gc-roots: true
   pure: true
   packages:

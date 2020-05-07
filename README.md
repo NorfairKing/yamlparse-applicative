@@ -11,6 +11,8 @@ See also https://github.com/chrisdone/streaming-parsers for related work.
 
 ## Example
 
+(See more under `yamlparse-applicative-demo`)
+
 Schema implementation:
 
 ``` haskell
@@ -19,17 +21,16 @@ data MyConfig
       { myConfigText :: Text,
         myConfigScientific :: Maybe Scientific,
         myConfigList :: [Bool],
-        myConfigSub :: Maybe MySubConfig
       }
   deriving (Show, Eq)
 
-instance FromYamlSchema MyConfig where
-  fromYamlSchema =
+instance YamlSchema MyConfig where
+  yamlSchema =
     object "MyConfig" $
       MyConfig
-        <$> requiredField "foo"
-        <*> optionalField "bar"
-        <*> optionalFieldWithDefault "quux" []
+        <$> requiredField "foo" "My foo docs"
+        <*> optionalField "bar" "My bar docs"
+        <*> optionalFieldWithDefault "quux" [] "My quux docs"
 ```
 
 Generated schema documentation:
@@ -37,9 +38,12 @@ Generated schema documentation:
 ```
 # MyConfig
 foo: # required
+  # My foo docs
   <string>
 bar: # optional
+  # My bar docs
   <number>
 quux: # optional, default: []
-  - <bool>
+  - # My quux docs
+    <bool>
 ```
