@@ -1,4 +1,5 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 
@@ -9,6 +10,7 @@ import Data.GenValidity.Aeson ()
 import Data.Scientific (Scientific)
 import Data.Text (Text)
 import Data.Typeable
+import GHC.Generics (Generic)
 import Test.Hspec
 import Test.QuickCheck
 import Test.Validity
@@ -27,6 +29,29 @@ spec =
     implementationsSpec @Aeson.Object
     implementationsSpec @Aeson.Value
     implementationsSpec @[Text]
+    implementationsSpec @[Text]
+    implementationsSpec @Fruit
+
+data Fruit = Apple | Banana | Melon
+  deriving (Show, Eq, Generic)
+
+instance Aeson.FromJSON Fruit
+
+instance Aeson.ToJSON Fruit
+
+instance YamlSchema Fruit where
+  yamlSchema =
+    alternatives
+      [ literalShowValue Apple,
+        literalShowValue Banana,
+        literalShowValue Melon
+      ]
+
+instance Validity Fruit
+
+instance GenUnchecked Fruit
+
+instance GenValid Fruit
 
 implementationsSpec ::
   forall a.
