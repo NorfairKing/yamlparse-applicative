@@ -37,6 +37,8 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - yamlparse-applicative
+    - text
+    - scientific
 
 tests:
   yamlparse-applicative-test:

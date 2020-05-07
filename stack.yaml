@@ -1,3 +1,11 @@
 resolver: lts-15.11
 packages:
 - yamlparse-applicative
+
+nix:
+  add-gc-roots: true
+  pure: true
+  packages:
+  - zlib
+  - haskellPackages.hpack
+
