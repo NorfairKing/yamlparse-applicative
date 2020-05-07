@@ -93,6 +93,11 @@ optionalFieldWithDefault' :: (Show a, YamlSchema a) => Text -> a -> ObjectParser
 optionalFieldWithDefault' k d = optionalFieldWithDefaultWith' k d yamlSchema
 
 -- | Helper function to implement 'FromJSON' via 'YamlSchema'
+--
+-- Example:
+--
+-- > instance FromJSON Config where
+-- >   parseJSON = viaYamlSchema
 viaYamlSchema :: YamlSchema a => Yaml.Value -> Yaml.Parser a
 viaYamlSchema = implementParser yamlSchema
 
