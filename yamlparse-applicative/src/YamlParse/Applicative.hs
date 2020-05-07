@@ -3,6 +3,70 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
+-- | Yamlparse applicative
+--
+-- Implement Yaml parsing and get documentation for it for free.
+--
+--
+-- = Usage example
+--
+-- For more examples, see the `yamlparse-applicative-demo` examples [in the github repository](https://github.com/NorfairKing/yamlparse-applicative/blob/master/yamlparse-applicative-demo/src/YamlParse/Applicative/Demo.hs)
+--
+-- Suppose you have some tool and you want to have it read its configuration from a file.
+-- You make a type for the configuration:
+--
+-- > data Configuration
+-- >   = Configuration
+-- >   { confUrl :: Maybe Text
+-- >   , confPort :: Int
+-- >   , confToken :: Text
+-- >   } deriving (Show, Eq)
+--
+-- Instead of implementing a 'Data.Yaml.FromJSON' instance, you now implement a 'YamlSchema' instance like so:
+--
+-- > instance YamlSchema Configuration
+-- >   yamlSchema =
+-- >     object $ -- Declare that it is a Yaml object
+-- >       Configuration
+-- >         <$> optionalField -- An optional key may be in the file
+-- >             "url"
+-- >             "The url to host the server at. It will be hosted on 'localhost' by default."
+-- >         <*> optionalFieldWithDefault -- An optional key with default _may_ in the file, the default will be used otherwise
+-- >             "port"
+-- >             8000
+-- >             "The post to host the server at."
+-- >         <*> requiredField -- A required field must be in the file
+-- >             "token"
+-- >             "The authorisation token that clients can use to authenticate themselves."
+--
+-- Now you've already documented the configuration in code.
+-- This will make sure that your documentation stays correct because it will be type-checked.
+--
+-- Now you can implement 'Data.Yaml.FromJSON' like so:
+--
+-- > instance FromJSON Configuration
+-- >   parseJSON = viaYamlSchema
+--
+-- And you can get user-facing documentation about the format for free using 'prettySchema . explainParser':
+--
+-- > # Configuration
+-- > url: # optional
+-- >   # The url to host the server at. It will be hosted on 'localhost' by default.
+-- >   <string>
+-- > port: # optional, default: 8000
+-- >   # The post to host the server at.
+-- >   <number>
+-- > token: # required
+-- >   # The authorisation token that clients can use to authenticate themselves.
+-- >   <bool>
+--
+-- If you are also using 'optparse-applicative', you can even add this documentation to your `--help` page as well using 'confDesc':
+--
+-- > argParser :: ParserInfo SomethingElse
+-- > argParser =
+-- >   info
+-- >     (helper <$> parseSomethingElse)
+-- >     (confDesc (yamlSchema :: YamlParser Configuration))
 module YamlParse.Applicative
   ( module YamlParse.Applicative.Parser,
     module YamlParse.Applicative.Class,
