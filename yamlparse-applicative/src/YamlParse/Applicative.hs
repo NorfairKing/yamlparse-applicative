@@ -5,11 +5,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module YamlParse.Applicative where
 
 import Control.Applicative
 import Control.Monad
+import qualified Data.Aeson as Aeson
+import qualified Data.Aeson.Types as Aeson
+import qualified Data.ByteString as SB
 import Data.Maybe
 import Data.Scientific
 import qualified Data.Text as T
@@ -25,6 +29,9 @@ import qualified Data.Yaml as Yaml
 import GHC.Generics (Generic)
 import qualified Options.Applicative as OptParse
 import qualified Options.Applicative.Help as OptParse
+import Path
+import Path.IO
+import System.Exit
 
 someFunc :: IO ()
 someFunc = do
@@ -269,6 +276,11 @@ literalString t = ParseString Nothing $ ParseEq t ParseAny
 (<?>) :: Parser i a -> Text -> Parser i a
 (<?>) = flip ParseComment
 
+-- | Add a list of lines of comments to a parser
+-- This info will be used in the schema for documentation.
+(<??>) :: Parser i a -> [Text] -> Parser i a
+(<??>) p ts = p <?> T.unlines ts
+
 -- | Use a 'Parser' to parse a value from Yaml.
 --
 -- A 'Parser i o' corresponds exactly to a 'i -> Yaml.Parser o' and this function servers as evidence for that.
@@ -292,17 +304,19 @@ implementParser = go
       ParseList p -> \l -> forM l $ \v -> go p v
       ParseArray t p -> Yaml.withArray (maybe "Array" T.unpack t) $ go p
       ParseField key fp -> \o -> case fp of
-        FieldParserRequired p -> o Yaml..: key >>= go p
+        FieldParserRequired p -> do
+          v <- o Yaml..: key
+          go p v Aeson.<?> Aeson.Key key
         FieldParserOptional p -> do
           mv <- o Yaml..:? key
           case mv of
             Nothing -> pure Nothing
-            Just v -> Just <$> go p v
+            Just v -> Just <$> go p v Aeson.<?> Aeson.Key key
         FieldParserOptionalWithDefault p d -> do
           mv <- o Yaml..:? key
           case mv of
             Nothing -> pure d
-            Just v -> go p v
+            Just v -> go p v Aeson.<?> Aeson.Key key
       ParseObject t p -> Yaml.withObject (maybe "Object" T.unpack t) $ go p
       ParsePure v -> const $ pure v
       ParseAp pf p -> \v -> go pf v <*> go p v
@@ -385,7 +399,7 @@ emptyComments = Comments []
 
 -- | A raw text as comments
 comment :: Text -> Comments
-comment t = Comments [pretty t]
+comment t = Comments $ map pretty $ T.lines t
 
 -- | Prettyprint a 'Schema'
 schemaDoc :: Schema -> Doc ()
@@ -444,6 +458,58 @@ schemaDoc = go emptyComments
                in e (listDoc $ map ge ss) (cs <> comment "Alternatives")
             CommentSchema t s -> go (cs <> comment t) s
 
+-- | Helper function to implement 'FromJSON' via 'YamlSchema'
+viaYamlSchema :: YamlSchema a => Yaml.Value -> Yaml.Parser a
+viaYamlSchema = implementParser yamlSchema
+
 -- | Helper function to add the schema documentation to the optparse applicative help output
 confDesc :: Parser i o -> OptParse.InfoMod a
 confDesc p = OptParse.footerDoc $ OptParse.string . T.unpack . prettySchema <$> explainParser p
+
+-- | Helper function to read a config file for a type in 'YamlSchema'
+readConfigFile :: (YamlSchema a, Yaml.FromJSON a) => Path r File -> IO (Maybe a)
+readConfigFile p = readFirstConfigFile [p]
+
+newtype ViaYamlSchema a = ViaYamlSchema a
+  deriving (Show, Eq, Generic)
+
+instance YamlSchema a => Yaml.FromJSON (ViaYamlSchema a) where
+  parseJSON = fmap ViaYamlSchema . viaYamlSchema
+
+-- | Helper function to read the first in a list of config files
+readFirstConfigFile :: forall a r. (Yaml.FromJSON a, YamlSchema a) => [Path r File] -> IO (Maybe a)
+readFirstConfigFile files = go files
+  where
+    go :: [Path r File] -> IO (Maybe a)
+    go =
+      \case
+        [] -> pure Nothing
+        (p : ps) -> do
+          mc <- forgivingAbsence $ SB.readFile $ toFilePath p
+          case mc of
+            Nothing -> go ps
+            Just contents ->
+              case Yaml.decodeEither' contents of
+                Left err -> do
+                  let failedMsgs =
+                        [ "Failed to parse yaml file",
+                          toFilePath p,
+                          "with error:",
+                          Yaml.prettyPrintParseException err
+                        ]
+                      triedFilesMsgs = case files of
+                        [] -> []
+                        [f] -> ["While parsing file: " <> toFilePath f]
+                        fs -> "While parsing files:" : (map (("* " <>) . toFilePath) fs)
+                      referenceMsgs =
+                        [ "Reference: ",
+                          maybe "" (T.unpack . prettySchema) $ explainParser (yamlSchema :: YamlParser a)
+                        ]
+                  die
+                    $ unlines
+                    $ concat
+                      [ failedMsgs,
+                        triedFilesMsgs,
+                        referenceMsgs
+                      ]
+                Right (ViaYamlSchema conf) -> pure $ Just conf

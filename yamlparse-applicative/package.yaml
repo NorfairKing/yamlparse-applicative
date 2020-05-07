@@ -17,6 +17,8 @@ library:
   - bytestring
   - optparse-applicative
   - prettyprinter
+  - path
+  - path-io
   - scientific
   - text
   - unordered-containers
