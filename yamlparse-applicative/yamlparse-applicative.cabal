@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 00bcf965da86daf5fd2d04d190c6953239dc55bc83225ab160841f9c27524ad3
+-- hash: 1abfaf0e4eca61fd0d9b9da4190ace76e34f8143316e2bba95c20264d064e961
 
 name:           yamlparse-applicative
 version:        0.0.0.0
@@ -52,7 +52,8 @@ executable yamlparse-applicative-demo
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , base >=4.7 && <5
     , scientific
     , text
     , yamlparse-applicative

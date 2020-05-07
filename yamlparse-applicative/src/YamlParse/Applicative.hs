@@ -226,9 +226,42 @@ unnamedObject = ParseObject Nothing
 -- > data Fruit = Apple | Banana
 -- >
 -- > instance YamlSchema Fruit where
--- >   yamlSchema = Apple <$ literalString "Apple" < Banana <$ literalString "Banana"
+-- >   yamlSchema = Apple <$ literalString "Apple" <|> Banana <$ literalString "Banana"
 literalString :: Text -> YamlParser Text
 literalString t = ParseString Nothing $ ParseEq t ParseAny
+
+-- | Declare a parser for a value using its show instance
+--
+-- Note that no value is read. The parsed string is just compared to the shown given value.
+--
+-- You can use this to parse a constructor in an enum for example:
+--
+-- > data Fruit = Apple | Banana | Melon
+-- >   deriving (Show, Eq)
+-- >
+-- > instance YamlSchema Fruit where
+-- >   yamlSchema = alternatives
+-- >      [ literalShowString Apple
+-- >      , literalShowString Banana
+-- >      , literalShowString Melon
+-- >      ]
+literalShowValue :: Show a => a -> YamlParser a
+literalShowValue v = v <$ literalString (T.pack $ show v)
+
+-- | Use the first parser of the given list that succeeds
+--
+-- You can use this to parse a constructor in an enum for example:
+--
+-- > data Fruit = Apple | Banana | Melon
+-- >
+-- > instance YamlSchema Fruit where
+-- >   yamlSchema = alternatives
+-- >      [ Apple <$ literalString "Apple"
+-- >      , Banana <$ literalString "Banana"
+-- >      , Melon <$ literalString "Melon"
+-- >      ]
+alternatives :: [Parser i o] -> Parser i o
+alternatives = ParseAlt
 
 -- | Add a comment to a parser
 -- This info will be used in the schema for documentation.
@@ -414,7 +447,7 @@ schemaDoc = go emptyComments
                   listDoc = \case
                     [] -> "[]"
                     (d : ds) -> vsep ["[" <+> nest 2 d, vsep $ map (("," <+>) . nest 2) ds, "]"]
-               in e (listDoc $ map ge ss) (cs <> comment "Alternatives")
+               in e (listDoc $ map ge ss) cs
             CommentSchema t s -> go (cs <> comment t) s
 
 -- | Helper function to implement 'FromJSON' via 'YamlSchema'

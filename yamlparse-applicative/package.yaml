@@ -39,6 +39,7 @@ executables:
     - yamlparse-applicative
     - text
     - scientific
+    - aeson
 
 tests:
   yamlparse-applicative-test:

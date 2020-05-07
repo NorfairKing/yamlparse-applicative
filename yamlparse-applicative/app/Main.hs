@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Main where
@@ -7,6 +8,7 @@ import Control.Monad
 import Data.Scientific
 import Data.Text (Text)
 import qualified Data.Text.IO as T
+import GHC.Generics (Generic)
 import YamlParse.Applicative
 
 main :: IO ()
@@ -20,9 +22,10 @@ data MyConfig
       { myConfigText :: Text,
         myConfigScientific :: Maybe Scientific,
         myConfigList :: [Bool],
-        myConfigSub :: Maybe MySubConfig
+        myConfigSub :: Maybe MySubConfig,
+        myConfigFruit :: Fruit
       }
-  deriving (Show, Eq)
+  deriving (Show)
 
 instance YamlSchema MyConfig where
   yamlSchema =
@@ -32,6 +35,7 @@ instance YamlSchema MyConfig where
         <*> optionalField "bar" "My bar"
         <*> optionalFieldWithDefault "quux" [] "My quux"
         <*> optionalField "sub" "My sub"
+        <*> requiredField "fruit" "My fruit"
 
 data MySubConfig
   = MySubConfig
@@ -39,7 +43,7 @@ data MySubConfig
         mySubConfigText :: Text,
         mySubConfigAlt :: Either Text Bool
       }
-  deriving (Show, Eq)
+  deriving (Show)
 
 instance YamlSchema MySubConfig where
   yamlSchema =
@@ -48,3 +52,14 @@ instance YamlSchema MySubConfig where
         <$> optionalField "foofoo" "My foofoo"
         <*> optionalFieldWithDefault "barbar" "defaultTextHere" "My bar"
         <*> (Left <$> (requiredField "left" "The left case") <|> Right <$> (requiredField "right" "The right case"))
+
+data Fruit = Apple | Banana | Melon
+  deriving (Show, Generic)
+
+instance YamlSchema Fruit where
+  yamlSchema =
+    alternatives
+      [ literalShowValue Apple,
+        literalShowValue Banana,
+        literalShowValue Melon
+      ]
