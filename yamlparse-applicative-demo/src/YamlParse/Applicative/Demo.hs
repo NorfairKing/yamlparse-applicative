@@ -49,7 +49,7 @@ instance YamlSchema MySubConfig where
       MySubConfig
         <$> optionalField "foofoo" "My foofoo"
         <*> optionalFieldWithDefault "barbar" "defaultTextHere" "My bar"
-        <*> (Left <$> (requiredField "left" "The left case") <|> Right <$> (requiredField "right" "The right case"))
+        <*> (Left <$> requiredField "left" "The left case" <|> Right <$> requiredField "right" "The right case")
 
 data Fruit = Apple | Banana | Melon
   deriving (Show)

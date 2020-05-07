@@ -1,10 +1,8 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module YamlParse.Applicative.IO where
@@ -48,7 +46,7 @@ readFirstConfigFile files = go files
                       triedFilesMsgs = case files of
                         [] -> []
                         [f] -> ["While parsing file: " <> toFilePath f]
-                        fs -> "While parsing files:" : (map (("* " <>) . toFilePath) fs)
+                        fs -> "While parsing files:" : map (("* " <>) . toFilePath) fs
                       referenceMsgs =
                         [ "Reference: ",
                           maybe "" (T.unpack . prettySchema) $ explainParser (yamlSchema :: YamlParser a)

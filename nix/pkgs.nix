@@ -1,6 +1,6 @@
 { pkgsf ? import ./nixpkgs.nix {}
 }:
-let 
+let
   cleanpkgs = import pkgsf {};
   validity-overlay =
     import (
@@ -11,9 +11,10 @@ let
     import pkgsf {
       overlays = [
         validity-overlay
-        ( import ./gitignore-src.nix )  
-        ( import ./overlay.nix )
+        (import ./gitignore-src.nix)
+        (import ./overlay.nix)
       ];
       config.allowUnfree = true;
     };
-in pkgs
+in
+pkgs

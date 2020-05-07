@@ -2,9 +2,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module YamlParse.Applicative.Explain where
@@ -63,5 +61,5 @@ explainParser = go
       ParsePure _ -> Nothing
       ParseFmap _ p -> go p
       ParseAp pf p -> ApSchema <$> go pf <*> go p
-      ParseAlt ps -> Just $ AltSchema $ catMaybes (map go ps)
+      ParseAlt ps -> Just $ AltSchema $ mapMaybe go ps
       ParseComment t p -> CommentSchema t <$> go p
