@@ -63,6 +63,7 @@ schemaDoc = go emptyComments
               Nothing -> s
               Just cd -> vsep [cd, s]
        in \case
+            EmptySchema -> e "# Nothing to parse" cs
             AnySchema -> e "<any>" cs
             ExactSchema t -> e (pretty t) cs
             BoolSchema t -> e "<bool>" $ addMComment cs t

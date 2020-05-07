@@ -3,7 +3,6 @@
 module YamlParse.Applicative.Demo where
 
 import Control.Applicative
-import Control.Monad
 import Data.Scientific
 import Data.Text (Text)
 import qualified Data.Text.IO as T
@@ -11,9 +10,8 @@ import YamlParse.Applicative
 
 main :: IO ()
 main =
-  forM_
-    (explainParser (yamlSchema :: YamlParser MyConfig))
-    $ T.putStrLn . prettySchema
+  T.putStrLn . prettySchema $
+    explainParser (yamlSchema :: YamlParser MyConfig)
 
 data MyConfig
   = MyConfig

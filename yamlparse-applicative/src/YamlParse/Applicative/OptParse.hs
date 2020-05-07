@@ -14,4 +14,4 @@ import YamlParse.Applicative.Pretty
 
 -- | Helper function to add the schema documentation to the optparse applicative help output
 confDesc :: Parser i o -> OptParse.InfoMod a
-confDesc p = OptParse.footerDoc $ OptParse.string . T.unpack . prettySchema <$> explainParser p
+confDesc p = OptParse.footerDoc $ Just $ OptParse.string . T.unpack . prettySchema $ explainParser p

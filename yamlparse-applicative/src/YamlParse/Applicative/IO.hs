@@ -49,7 +49,7 @@ readFirstConfigFile files = go files
                         fs -> "While parsing files:" : map (("* " <>) . toFilePath) fs
                       referenceMsgs =
                         [ "Reference: ",
-                          maybe "" (T.unpack . prettySchema) $ explainParser (yamlSchema :: YamlParser a)
+                          T.unpack $ prettySchema $ explainParser (yamlSchema :: YamlParser a)
                         ]
                   die
                     $ unlines
