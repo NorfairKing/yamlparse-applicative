@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9915238ff2f874ec574c9e44c99f3658f82fcaba80979293ba0b88384f0ce4ad
+-- hash: 65319800035831b8bec4c4e79adcafb10112f1d1f3d502799ce7ff16a19329c2
 
 name:           yamlparse-applicative
 version:        0.0.0.0
@@ -23,7 +23,13 @@ source-repository head
 library
   exposed-modules:
       YamlParse.Applicative
+      YamlParse.Applicative.Class
+      YamlParse.Applicative.Explain
+      YamlParse.Applicative.Implement
+      YamlParse.Applicative.IO
+      YamlParse.Applicative.OptParse
       YamlParse.Applicative.Parser
+      YamlParse.Applicative.Pretty
   other-modules:
       Paths_yamlparse_applicative
   hs-source-dirs:

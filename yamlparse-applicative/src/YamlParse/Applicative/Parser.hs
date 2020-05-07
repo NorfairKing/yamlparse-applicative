@@ -10,30 +10,15 @@
 module YamlParse.Applicative.Parser where
 
 import Control.Applicative
-import Control.Monad
 import qualified Data.Aeson as JSON
-import qualified Data.Aeson as Aeson
-import qualified Data.Aeson.Types as Aeson
-import qualified Data.ByteString as SB
 import qualified Data.ByteString.Lazy as LB
-import Data.Maybe
 import Data.Scientific
 import qualified Data.Text as T
 import Data.Text (Text)
 import qualified Data.Text.Encoding as TE
-import Data.Text.Prettyprint.Doc
-import Data.Text.Prettyprint.Doc.Render.Text
-import Data.Validity
 import Data.Validity.Text ()
 import Data.Vector (Vector)
-import qualified Data.Vector as V
 import qualified Data.Yaml as Yaml
-import GHC.Generics (Generic)
-import qualified Options.Applicative as OptParse
-import qualified Options.Applicative.Help as OptParse
-import Path
-import Path.IO
-import System.Exit
 
 data Parser i o where
   -- | Return the input
