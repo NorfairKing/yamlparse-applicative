@@ -23,6 +23,8 @@ import Data.Vector (Vector)
 import qualified Data.Vector as V
 import qualified Data.Yaml as Yaml
 import GHC.Generics (Generic)
+import qualified Options.Applicative as OptParse
+import qualified Options.Applicative.Help as OptParse
 
 someFunc :: IO ()
 someFunc = do
@@ -324,7 +326,8 @@ explainParser = go
       ParseEq e _ -> Just $ ExactSchema (T.pack (show e))
       ParseBool t _ -> Just $ BoolSchema t
       ParseNumber t _ -> Just $ NumberSchema t
-      ParseString t _ -> Just $ StringSchema t
+      ParseString t ParseAny -> Just $ StringSchema t
+      ParseString _ p -> go p
       ParseArray t p -> ArraySchema t <$> go p
       ParseList p -> ListSchema <$> go p
       ParseField k fp -> case fp of
@@ -440,3 +443,7 @@ schemaDoc = go emptyComments
                     (d : ds) -> vsep ["[" <+> nest 2 d, vsep $ map (("," <+>) . nest 2) ds, "]"]
                in e (listDoc $ map ge ss) (cs <> comment "Alternatives")
             CommentSchema t s -> go (cs <> comment t) s
+
+-- | Helper function to add the schema documentation to the optparse applicative help output
+confDesc :: Parser i o -> OptParse.InfoMod a
+confDesc p = OptParse.footerDoc $ OptParse.string . T.unpack . prettySchema <$> explainParser p

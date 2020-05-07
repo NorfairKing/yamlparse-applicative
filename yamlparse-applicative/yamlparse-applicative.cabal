@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0e62db7f1173eb534b71bf98f417bd3c5458c3ad1dec89a5a42bd1eb99736b00
+-- hash: 72223f10b6ecb25970fbfdd69ba29e04dad95ce09a18fdeaacf23e52cf10cd69
 
 name:           yamlparse-applicative
 version:        0.0.0.0
@@ -31,6 +31,7 @@ library
       aeson
     , base >=4.7 && <5
     , bytestring
+    , optparse-applicative
     , prettyprinter
     , scientific
     , text

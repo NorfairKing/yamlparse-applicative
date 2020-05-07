@@ -15,6 +15,7 @@ library:
   dependencies:
   - aeson
   - bytestring
+  - optparse-applicative
   - prettyprinter
   - scientific
   - text
