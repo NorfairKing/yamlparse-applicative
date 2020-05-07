@@ -1,7 +1,7 @@
 name:                yamlparse-applicative
 version:             0.0.0.0
 github:              "NorfairKing/confparse"
-license:             AllRightsReserved
+license:             MIT
 author:              "Tom Sydney Kerckhove"
 maintainer:          "syd@cs-syd.eu"
 copyright:           "2020 Tom Sydney Kerckhove"
