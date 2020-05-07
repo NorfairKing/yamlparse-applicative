@@ -5,6 +5,9 @@ license:             MIT
 author:              "Tom Sydney Kerckhove"
 maintainer:          "syd@cs-syd.eu"
 copyright:           "2020 Tom Sydney Kerckhove"
+synopsys:            Declaritive configuration parsing with free docs
+description:         See https://github.com/NorfairKing/yamlparse-applicative
+
 
 
 dependencies:

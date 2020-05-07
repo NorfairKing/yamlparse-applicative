@@ -4,16 +4,17 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 65319800035831b8bec4c4e79adcafb10112f1d1f3d502799ce7ff16a19329c2
+-- hash: 90b9b5088eb7782c23eff327325b065eece4efe16e382e85e087f7dcc0f0fd19
 
 name:           yamlparse-applicative
 version:        0.0.0.0
+description:    See https://github.com/NorfairKing/yamlparse-applicative
 homepage:       https://github.com/NorfairKing/confparse#readme
 bug-reports:    https://github.com/NorfairKing/confparse/issues
 author:         Tom Sydney Kerckhove
 maintainer:     syd@cs-syd.eu
 copyright:      2020 Tom Sydney Kerckhove
-license:        AllRightsReserved
+license:        MIT
 build-type:     Simple
 
 source-repository head
