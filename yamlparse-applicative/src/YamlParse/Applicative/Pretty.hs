@@ -66,6 +66,8 @@ schemaDoc = go emptyComments
             EmptySchema -> e "# Nothing to parse" cs
             AnySchema -> e "<any>" cs
             ExactSchema t -> e (pretty t) cs
+            NullSchema -> e "null" cs
+            MaybeSchema s -> go (cs <> comment "or <null>") s
             BoolSchema t -> e "<bool>" $ addMComment cs t
             NumberSchema t -> e "<number>" $ addMComment cs t
             StringSchema t -> e "<string>" $ addMComment cs t

@@ -24,14 +24,18 @@ implementParser = go
     go :: Parser i o -> (i -> Yaml.Parser o)
     go = \case
       ParseAny -> pure
+      ParseExtra ef p -> \i -> do
+        o <- go p i
+        ef o
       ParseEq v t p -> \i -> do
         r <- go p i
         if r == v then pure r else fail $ "Expected " <> T.unpack t <> " exactly but got: " <> show r
-      ParseMaybe mf p -> \i -> do
-        o <- go p i
-        case mf o of
-          Nothing -> fail "Parsing failed"
-          Just u -> pure u
+      ParseNull -> \v -> case v of
+        Yaml.Null -> pure ()
+        _ -> fail $ "Expected 'null' but got: " <> show v
+      ParseMaybe p -> \v -> case v of
+        Yaml.Null -> pure Nothing
+        _ -> Just <$> go p v
       -- We can't just do 'withBool (maybe "Bool" T.unpack mt)' because then there is an extra context in the error message.
       ParseBool mt p -> case mt of
         Just t -> Yaml.withBool (T.unpack t) $ go p

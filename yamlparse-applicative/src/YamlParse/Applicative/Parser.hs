@@ -23,8 +23,8 @@ import Text.Read
 data Parser i o where
   -- | Return the input
   ParseAny :: Parser i i
-  -- | Parse via a parser function
-  ParseMaybe :: (o -> Maybe u) -> Parser i o -> Parser i u
+  -- | Parse via an extra parsing function
+  ParseExtra :: (o -> Yaml.Parser u) -> Parser i o -> Parser i u
   -- | Match an exact value
   ParseEq ::
     (Show o, Eq o) =>
@@ -33,6 +33,10 @@ data Parser i o where
     Text ->
     Parser i o ->
     Parser i o
+  -- | Parse 'null' only.
+  ParseNull :: Parser Yaml.Value ()
+  -- | Parse 'null' as 'Nothing' and the rest as 'Just'.
+  ParseMaybe :: Parser Yaml.Value o -> Parser Yaml.Value (Maybe o)
   -- | Parse a boolean value
   ParseBool :: Maybe Text -> Parser Bool o -> Parser Yaml.Value o
   -- | Parse a String value
@@ -122,7 +126,7 @@ unnamedObjectParser = ParseObject Nothing
 --
 -- You probably don't want to use 'Read'.
 viaRead :: Read a => YamlParser a
-viaRead = ParseMaybe readMaybe $ T.unpack <$> ParseString Nothing ParseAny
+viaRead = maybeParser readMaybe $ T.unpack <$> ParseString Nothing ParseAny
 
 -- | Declare a parser for an exact string.
 --
@@ -251,3 +255,42 @@ optionalFieldWithDefaultWith k d h func = ParseComment h $ ParseField k $ FieldP
 -- For the sake of documentation, the default value needs to be showable.
 optionalFieldWithDefaultWith' :: Show a => Text -> a -> YamlParser a -> ObjectParser a
 optionalFieldWithDefaultWith' k d func = ParseField k $ FieldParserOptionalWithDefault func d
+
+-- | Make a parser that parses a value using the given extra parsing function
+--
+-- You can use this to make a parser for a type with a smart constructor.
+-- Prefer 'eitherParser' if you can so you get better error messages.
+--
+-- Example:
+--
+-- > parseUsername :: Text -> Maybe Username
+-- >
+-- > instance YamlSchema Username where
+-- >   yamlSchema = maybeParser parseUsername yamlSchema
+maybeParser :: Show o => (o -> Maybe u) -> Parser i o -> Parser i u
+maybeParser func = ParseExtra $ \o -> case func o of
+  Nothing -> fail $ "Parsing of " <> show o <> " failed."
+  Just u -> pure u
+
+-- | Make a parser that parses a value using the given extra parsing function
+--
+-- You can use this to make a parser for a type with a smart constructor.
+-- If you don't have a 'Show' instance for your 'o', then you can use 'extraParser' instead.
+--
+-- Example:
+--
+-- > parseUsername :: Text -> Either String Username
+-- >
+-- > instance YamlSchema Username where
+-- >   yamlSchema = eitherParser parseUsername yamlSchema
+eitherParser :: Show o => (o -> Either String u) -> Parser i o -> Parser i u
+eitherParser func = ParseExtra $ \o -> case func o of
+  Left err -> fail $ "Parsing of " <> show o <> " failed with error: " <> err <> "."
+  Right u -> pure u
+
+-- | Make a parser that parses a value using the given extra parsing function
+--
+-- You can use this to make a parser for a type with a smart constructor.
+-- Prefer 'eitherParser' if you can, use this if you don't have a 'Show' instance for your 'o'.
+extraParser :: (o -> Yaml.Parser u) -> Parser i o -> Parser i u
+extraParser = ParseExtra

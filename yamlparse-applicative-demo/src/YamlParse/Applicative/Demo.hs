@@ -3,7 +3,6 @@
 module YamlParse.Applicative.Demo where
 
 import Control.Applicative
-import Data.Scientific
 import Data.Text (Text)
 import qualified Data.Text.IO as T
 import YamlParse.Applicative
@@ -16,10 +15,12 @@ main =
 data MyConfig
   = MyConfig
       { myConfigText :: Text,
-        myConfigScientific :: Maybe Scientific,
+        myConfigScientific :: Maybe Int,
         myConfigList :: [Bool],
         myConfigSub :: Maybe MySubConfig,
-        myConfigFruit :: Fruit
+        myConfigFruit :: Fruit,
+        myConfigNull :: (),
+        myConfigMaybe :: Maybe Int
       }
   deriving (Show)
 
@@ -32,6 +33,8 @@ instance YamlSchema MyConfig where
         <*> optionalFieldWithDefault "quux" [] "My quux"
         <*> optionalField "sub" "My sub"
         <*> requiredField "fruit" "My fruit"
+        <*> requiredField "empty" "My null"
+        <*> requiredField "num" "My maybe"
 
 data MySubConfig
   = MySubConfig

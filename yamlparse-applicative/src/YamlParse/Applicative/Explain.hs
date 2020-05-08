@@ -21,6 +21,8 @@ data Schema
   = EmptySchema
   | AnySchema
   | ExactSchema Text
+  | NullSchema
+  | MaybeSchema Schema
   | BoolSchema (Maybe Text)
   | NumberSchema (Maybe Text)
   | StringSchema (Maybe Text)
@@ -45,8 +47,10 @@ explainParser = go
     go :: Parser i o -> Schema
     go = \case
       ParseAny -> AnySchema
-      ParseMaybe _ p -> go p
+      ParseExtra _ p -> go p
       ParseEq _ t _ -> ExactSchema t
+      ParseNull -> NullSchema
+      ParseMaybe p -> MaybeSchema $ go p
       ParseBool t _ -> BoolSchema t
       ParseNumber t _ -> NumberSchema t
       ParseString t ParseAny -> StringSchema t

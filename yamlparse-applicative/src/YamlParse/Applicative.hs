@@ -74,6 +74,9 @@ module YamlParse.Applicative
     -- ** Implementing YamlSchema instances
     objectParser,
     unnamedObjectParser,
+    maybeParser,
+    eitherParser,
+    extraParser,
     (<?>),
     (<??>),
     requiredField,

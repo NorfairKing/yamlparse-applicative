@@ -14,7 +14,6 @@ library:
   source-dirs: src
   dependencies:
   - aeson
-  - scientific
   - text
   - yamlparse-applicative
 

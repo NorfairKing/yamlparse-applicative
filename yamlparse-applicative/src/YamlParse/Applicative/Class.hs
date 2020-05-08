@@ -6,6 +6,7 @@
 
 module YamlParse.Applicative.Class where
 
+import Control.Applicative
 import qualified Data.Aeson as JSON
 import Data.Int
 import Data.Scientific
@@ -37,13 +38,16 @@ class YamlSchema a where
   yamlSchemaList :: YamlParser [a]
   yamlSchemaList = V.toList <$> ParseArray Nothing (ParseList yamlSchema)
 
+instance YamlSchema () where
+  yamlSchema = pure ()
+
 instance YamlSchema Bool where
   yamlSchema = ParseBool Nothing ParseAny
 
 instance YamlSchema Char where
   yamlSchema =
     ParseString Nothing $
-      ParseMaybe
+      maybeParser
         ( \cs -> case T.unpack cs of
             [] -> Nothing
             [c] -> Just c
@@ -89,13 +93,19 @@ instance YamlSchema Word64 where
   yamlSchema = boundedIntegerSchema
 
 boundedIntegerSchema :: (Integral i, Bounded i) => YamlParser i
-boundedIntegerSchema = ParseMaybe toBoundedInteger $ ParseNumber Nothing ParseAny
+boundedIntegerSchema = maybeParser toBoundedInteger $ ParseNumber Nothing ParseAny
 
 instance YamlSchema Yaml.Object where
   yamlSchema = ParseObject Nothing ParseAny
 
 instance YamlSchema Yaml.Value where
   yamlSchema = ParseAny
+
+instance YamlSchema a => YamlSchema (Maybe a) where
+  yamlSchema = ParseMaybe yamlSchema
+
+instance (YamlSchema a, YamlSchema b) => YamlSchema (Either a b) where
+  yamlSchema = Left <$> yamlSchema <|> Right <$> yamlSchema
 
 instance YamlSchema a => YamlSchema (Vector a) where
   yamlSchema = ParseArray Nothing (ParseList yamlSchema)
