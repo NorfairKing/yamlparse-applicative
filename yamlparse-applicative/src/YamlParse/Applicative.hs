@@ -24,7 +24,7 @@
 --
 -- Instead of implementing a 'Data.Yaml.FromJSON' instance, you now implement a 'YamlSchema' instance like so:
 --
--- > instance YamlSchema Configuration
+-- > instance YamlSchema Configuration where
 -- >   yamlSchema =
 -- >     objectParser $ -- Declare that it is a Yaml object
 -- >       Configuration
@@ -44,7 +44,7 @@
 --
 -- Now you can implement 'Data.Yaml.FromJSON' like so:
 --
--- > instance FromJSON Configuration
+-- > instance FromJSON Configuration where
 -- >   parseJSON = viaYamlSchema
 --
 -- And you can get user-facing documentation about the format for free using 'prettySchema . explainParser':
