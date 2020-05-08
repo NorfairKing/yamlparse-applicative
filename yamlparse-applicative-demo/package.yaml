@@ -17,6 +17,7 @@ library:
   - containers
   - text
   - yamlparse-applicative
+  - path
 
 executables:
   yamlparse-applicative-demo:

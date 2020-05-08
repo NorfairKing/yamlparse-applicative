@@ -8,6 +8,7 @@ import Data.Map (Map)
 import Data.Set (Set)
 import Data.Text (Text)
 import qualified Data.Text.IO as T
+import Path
 import YamlParse.Applicative
 
 main :: IO ()
@@ -26,7 +27,8 @@ data MyConfig
         myConfigMaybe :: Maybe Int,
         myConfigMap :: Map Text Int,
         myConfigSet :: Set Text,
-        myConfigNEList :: NonEmpty Int
+        myConfigNEList :: NonEmpty Int,
+        myConfigPath :: Path Rel File
       }
   deriving (Show)
 
@@ -44,6 +46,7 @@ instance YamlSchema MyConfig where
         <*> requiredField "map" "My map"
         <*> requiredField "set" "My set"
         <*> requiredField "nelist" "My nonempty list"
+        <*> requiredField "path" "My path"
 
 data MySubConfig
   = MySubConfig

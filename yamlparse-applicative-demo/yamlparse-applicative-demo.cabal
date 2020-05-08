@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 84deb17bc786f532d0c6c5fd340eadd103e54ada2d1b9a2725137caaa58ef476
+-- hash: 69e8ff9863f00dbba90efb899b7a285c014003343a0842d40b11c5d475c6e07b
 
 name:           yamlparse-applicative-demo
 version:        0.0.0.0
@@ -31,6 +31,7 @@ library
       aeson
     , base >=4.7 && <5
     , containers
+    , path
     , text
     , yamlparse-applicative
   default-language: Haskell2010

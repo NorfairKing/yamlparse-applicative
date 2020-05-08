@@ -21,6 +21,7 @@ import qualified Data.Vector as V
 import Data.Word
 import qualified Data.Yaml as Yaml
 import GHC.Generics (Generic)
+import Path
 import YamlParse.Applicative.Implement
 import YamlParse.Applicative.Parser
 
@@ -108,6 +109,18 @@ instance YamlSchema Word64 where
 
 boundedIntegerSchema :: (Integral i, Bounded i) => YamlParser i
 boundedIntegerSchema = maybeParser toBoundedInteger $ ParseNumber Nothing ParseAny
+
+instance YamlSchema (Path Rel File) where
+  yamlSchema = maybeParser parseRelFile yamlSchema
+
+instance YamlSchema (Path Rel Dir) where
+  yamlSchema = maybeParser parseRelDir yamlSchema
+
+instance YamlSchema (Path Abs File) where
+  yamlSchema = maybeParser parseAbsFile yamlSchema
+
+instance YamlSchema (Path Abs Dir) where
+  yamlSchema = maybeParser parseAbsDir yamlSchema
 
 instance YamlSchema Yaml.Value where
   yamlSchema = ParseAny
