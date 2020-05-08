@@ -75,7 +75,6 @@ schemaDoc = go emptyComments
             -- The comments really only work on the object level
             -- so they are erased when going down
             ObjectSchema t s -> e (ge s) (addMComment cs t)
-            ListSchema s -> g s
             FieldSchema k r md s ->
               let keyDoc :: Doc a
                   keyDoc = pretty k
@@ -90,6 +89,9 @@ schemaDoc = go emptyComments
                     [ keyDoc <> ":" <+> mkComment requiredDoc,
                       indent 2 $ g s
                     ]
+            ListSchema s -> g s
+            MapSchema s -> e ("<key>: " <> g s) cs
+            MapKeysSchema s -> g s
             ApSchema s1 s2 -> align $ vsep [g s1, g s2]
             AltSchema ss ->
               let listDoc :: [Doc a] -> Doc a

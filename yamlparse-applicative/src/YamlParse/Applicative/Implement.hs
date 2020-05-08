@@ -8,9 +8,10 @@
 module YamlParse.Applicative.Implement where
 
 import Control.Applicative
-import Control.Monad
 import qualified Data.Aeson as Aeson
 import qualified Data.Aeson.Types as Aeson
+import qualified Data.HashMap.Strict as HM
+import qualified Data.Map as M
 import qualified Data.Text as T
 import qualified Data.Yaml as Yaml
 import YamlParse.Applicative.Parser
@@ -62,7 +63,6 @@ implementParser = go
         Nothing -> \v -> case v of
           Yaml.Object o -> go p o
           _ -> Aeson.typeMismatch "Object" v
-      ParseList p -> \l -> forM l $ \v -> go p v
       ParseField key fp -> \o -> case fp of
         FieldParserRequired p -> do
           v <- o Yaml..: key
@@ -77,10 +77,16 @@ implementParser = go
           case mv of
             Nothing -> pure d
             Just v -> go p v Aeson.<?> Aeson.Key key
+      ParseList p -> mapM (go p)
+      ParseMap p -> HM.traverseWithKey $ \_ v -> go p v
+      ParseMapKeys p pm -> \val -> do
+        hm <- go pm val
+        M.fromList <$> mapM (\(k, v) -> (,) <$> go p k <*> pure v) (HM.toList hm)
       ParsePure v -> const $ pure v
       ParseAp pf p -> \v -> go pf v <*> go p v
       ParseAlt ps -> \v -> case ps of
         [] -> fail "No alternatives."
-        (p : ps') -> go p v <|> go (ParseAlt ps') v
+        [p] -> go p v
+        (p' : ps') -> go p' v <|> go (ParseAlt ps') v
       ParseFmap f p -> fmap f . go p
       ParseComment _ p -> go p

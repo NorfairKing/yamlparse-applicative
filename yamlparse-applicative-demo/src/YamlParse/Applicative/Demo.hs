@@ -3,6 +3,7 @@
 module YamlParse.Applicative.Demo where
 
 import Control.Applicative
+import Data.Map (Map)
 import Data.Text (Text)
 import qualified Data.Text.IO as T
 import YamlParse.Applicative
@@ -20,7 +21,8 @@ data MyConfig
         myConfigSub :: Maybe MySubConfig,
         myConfigFruit :: Fruit,
         myConfigNull :: (),
-        myConfigMaybe :: Maybe Int
+        myConfigMaybe :: Maybe Int,
+        myConfigMap :: Map Text Int
       }
   deriving (Show)
 
@@ -35,6 +37,7 @@ instance YamlSchema MyConfig where
         <*> requiredField "fruit" "My fruit"
         <*> requiredField "empty" "My null"
         <*> requiredField "num" "My maybe"
+        <*> requiredField "map" "My map"
 
 data MySubConfig
   = MySubConfig

@@ -7,6 +7,10 @@ module YamlParse.ApplicativeSpec where
 
 import qualified Data.Aeson.Types as Aeson
 import Data.GenValidity.Aeson ()
+import Data.GenValidity.Containers ()
+import Data.GenValidity.UnorderedContainers ()
+import Data.HashMap.Strict (HashMap)
+import Data.Map (Map)
 import Data.Scientific (Scientific)
 import Data.Text (Text)
 import Data.Typeable
@@ -29,7 +33,10 @@ spec =
     implementationsSpec @Aeson.Object
     implementationsSpec @Aeson.Value
     implementationsSpec @[Text]
-    implementationsSpec @[Text]
+    implementationsSpec @(Maybe Text)
+    implementationsSpec @(Map Text Int)
+    implementationsSpec @(HashMap Text Int)
+    implementationsSpec @(Map String Int)
     implementationsSpec @Fruit
 
 data Fruit = Apple | Banana | Melon

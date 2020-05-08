@@ -6,9 +6,10 @@
 
 module YamlParse.Applicative.Class where
 
-import Control.Applicative
 import qualified Data.Aeson as JSON
+import Data.HashMap.Strict (HashMap)
 import Data.Int
+import Data.Map (Map)
 import Data.Scientific
 import qualified Data.Text as T
 import Data.Text (Text)
@@ -38,6 +39,10 @@ class YamlSchema a where
   yamlSchemaList :: YamlParser [a]
   yamlSchemaList = V.toList <$> ParseArray Nothing (ParseList yamlSchema)
 
+-- | A class of types for which a schema for keys is defined.
+class YamlKeySchema a where
+  yamlKeySchema :: KeyParser a
+
 instance YamlSchema () where
   yamlSchema = pure ()
 
@@ -58,6 +63,12 @@ instance YamlSchema Char where
 
 instance YamlSchema Text where
   yamlSchema = ParseString Nothing ParseAny
+
+instance YamlKeySchema Text where
+  yamlKeySchema = ParseAny
+
+instance YamlKeySchema String where
+  yamlKeySchema = T.unpack <$> yamlKeySchema
 
 instance YamlSchema Scientific where
   yamlSchema = ParseNumber Nothing ParseAny
@@ -95,23 +106,26 @@ instance YamlSchema Word64 where
 boundedIntegerSchema :: (Integral i, Bounded i) => YamlParser i
 boundedIntegerSchema = maybeParser toBoundedInteger $ ParseNumber Nothing ParseAny
 
-instance YamlSchema Yaml.Object where
-  yamlSchema = ParseObject Nothing ParseAny
-
 instance YamlSchema Yaml.Value where
   yamlSchema = ParseAny
 
 instance YamlSchema a => YamlSchema (Maybe a) where
   yamlSchema = ParseMaybe yamlSchema
 
-instance (YamlSchema a, YamlSchema b) => YamlSchema (Either a b) where
-  yamlSchema = Left <$> yamlSchema <|> Right <$> yamlSchema
-
 instance YamlSchema a => YamlSchema (Vector a) where
   yamlSchema = ParseArray Nothing (ParseList yamlSchema)
 
 instance YamlSchema a => YamlSchema [a] where
   yamlSchema = yamlSchemaList
+
+instance (Ord k, YamlKeySchema k, YamlSchema v) => YamlSchema (Map k v) where
+  yamlSchema = ParseObject Nothing $ ParseMapKeys yamlKeySchema $ ParseMap yamlSchema
+
+-- | There is no instance using YamlKeySchema k yet.
+-- Ideally there wouldn't be one for HashMap Text either because it's insecure,
+-- but the yaml arrives in a HashMap anyway so we might as well expose this.
+instance YamlSchema v => YamlSchema (HashMap Text v) where
+  yamlSchema = ParseObject Nothing $ ParseMap yamlSchema
 
 -- | A parser for a required field in an object at a given key
 requiredField :: YamlSchema a => Text -> Text -> ObjectParser a

@@ -70,6 +70,7 @@
 module YamlParse.Applicative
   ( -- * The YamlSchema Class
     YamlSchema (..),
+    YamlKeySchema (..),
 
     -- ** Implementing YamlSchema instances
     objectParser,

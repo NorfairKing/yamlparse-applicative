@@ -8,6 +8,8 @@ module YamlParse.Applicative.Parser where
 import Control.Applicative
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as LB
+import Data.HashMap.Strict (HashMap)
+import Data.Map (Map)
 import Data.Scientific
 import qualified Data.Text as T
 import Data.Text (Text)
@@ -71,6 +73,17 @@ data Parser i o where
   ParseList ::
     Parser Yaml.Value o ->
     Parser Yaml.Array (Vector o)
+  -- | Parse a map where the keys are the yaml keys
+  ParseMap ::
+    Parser Yaml.Value v ->
+    Parser Yaml.Object (HashMap Text v)
+  -- | Parse a map's keys via a given parser
+  ParseMapKeys ::
+    Ord k =>
+    Parser Text k ->
+    Parser Yaml.Object (HashMap Text v) ->
+    Parser Yaml.Object (Map k v) -- Once we get out of a HashMap, we'll want to stay out.
+
   -- | Parse a field of an object
   ParseField ::
     -- | The key of the field
@@ -111,6 +124,8 @@ data FieldParser o where
 type YamlParser a = Parser Yaml.Value a
 
 type ObjectParser a = Parser Yaml.Object a
+
+type KeyParser a = Parser Text a
 
 -- | Declare a parser of a named object
 objectParser :: Text -> ObjectParser o -> YamlParser o

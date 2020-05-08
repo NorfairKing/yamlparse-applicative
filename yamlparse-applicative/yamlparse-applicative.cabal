@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d7a4951aa1cb84b57208a97ecebcb625f1fcdb73a6dfdece44e53a38f30176a9
+-- hash: e182ca7146e588dfa24ab264a57092bf6cd4f4763a17cf10d96a1e29a9bbff8d
 
 name:           yamlparse-applicative
 version:        0.0.0.0
@@ -40,6 +40,7 @@ library
       aeson
     , base >=4.7 && <5
     , bytestring
+    , containers
     , optparse-applicative
     , path
     , path-io
@@ -66,12 +67,16 @@ test-suite yamlparse-applicative-test
       QuickCheck
     , aeson
     , base >=4.7 && <5
+    , containers
     , genvalidity-aeson
+    , genvalidity-containers
     , genvalidity-hspec
     , genvalidity-scientific
     , genvalidity-text
+    , genvalidity-unordered-containers
     , hspec
     , scientific
     , text
+    , unordered-containers
     , yamlparse-applicative
   default-language: Haskell2010

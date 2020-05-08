@@ -28,8 +28,10 @@ data Schema
   | StringSchema (Maybe Text)
   | ArraySchema (Maybe Text) Schema
   | ObjectSchema (Maybe Text) Schema
-  | ListSchema Schema
   | FieldSchema Text Bool (Maybe Text) Schema
+  | ListSchema Schema
+  | MapSchema Schema
+  | MapKeysSchema Schema
   | ApSchema Schema Schema -- We'll take this to mean 'and'
   | AltSchema [Schema]
   | CommentSchema Text Schema
@@ -56,12 +58,14 @@ explainParser = go
       ParseString t ParseAny -> StringSchema t
       ParseString _ p -> go p
       ParseArray t p -> ArraySchema t $ go p
-      ParseList p -> ListSchema $ go p
+      ParseObject t p -> ObjectSchema t $ go p
       ParseField k fp -> case fp of
         FieldParserRequired p -> FieldSchema k True Nothing $ go p
         FieldParserOptional p -> FieldSchema k False Nothing $ go p
         FieldParserOptionalWithDefault p d -> FieldSchema k False (Just $ T.pack $ show d) $ go p
-      ParseObject t p -> ObjectSchema t $ go p
+      ParseList p -> ListSchema $ go p
+      ParseMap p -> MapSchema $ go p
+      ParseMapKeys _ p -> MapKeysSchema $ go p
       ParsePure _ -> EmptySchema
       ParseFmap _ p -> go p
       ParseAp pf p -> ApSchema (go pf) (go p)

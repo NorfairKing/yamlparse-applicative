@@ -18,10 +18,11 @@ library:
   dependencies:
   - aeson
   - bytestring
+  - containers
   - optparse-applicative
-  - prettyprinter
   - path
   - path-io
+  - prettyprinter
   - scientific
   - text
   - unordered-containers
@@ -41,11 +42,15 @@ tests:
     dependencies:
     - QuickCheck
     - aeson
-    - genvalidity-hspec
+    - containers
     - genvalidity-aeson
+    - genvalidity-containers
+    - genvalidity-hspec
     - genvalidity-scientific
     - genvalidity-text
+    - genvalidity-unordered-containers
     - hspec
     - scientific
     - text
+    - unordered-containers
     - yamlparse-applicative
