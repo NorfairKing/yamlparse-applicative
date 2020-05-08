@@ -3,7 +3,9 @@
 module YamlParse.Applicative.Demo where
 
 import Control.Applicative
+import Data.List.NonEmpty (NonEmpty (..))
 import Data.Map (Map)
+import Data.Set (Set)
 import Data.Text (Text)
 import qualified Data.Text.IO as T
 import YamlParse.Applicative
@@ -22,7 +24,9 @@ data MyConfig
         myConfigFruit :: Fruit,
         myConfigNull :: (),
         myConfigMaybe :: Maybe Int,
-        myConfigMap :: Map Text Int
+        myConfigMap :: Map Text Int,
+        myConfigSet :: Set Text,
+        myConfigNEList :: NonEmpty Int
       }
   deriving (Show)
 
@@ -38,6 +42,8 @@ instance YamlSchema MyConfig where
         <*> requiredField "empty" "My null"
         <*> requiredField "num" "My maybe"
         <*> requiredField "map" "My map"
+        <*> requiredField "set" "My set"
+        <*> requiredField "nelist" "My nonempty list"
 
 data MySubConfig
   = MySubConfig

@@ -10,8 +10,10 @@ import Data.GenValidity.Aeson ()
 import Data.GenValidity.Containers ()
 import Data.GenValidity.UnorderedContainers ()
 import Data.HashMap.Strict (HashMap)
+import Data.List.NonEmpty (NonEmpty)
 import Data.Map (Map)
 import Data.Scientific (Scientific)
+import Data.Set (Set)
 import Data.Text (Text)
 import Data.Typeable
 import GHC.Generics (Generic)
@@ -33,7 +35,9 @@ spec =
     implementationsSpec @Aeson.Object
     implementationsSpec @Aeson.Value
     implementationsSpec @[Text]
+    implementationsSpec @(NonEmpty Text)
     implementationsSpec @(Maybe Text)
+    implementationsSpec @(Set Text)
     implementationsSpec @(Map Text Int)
     implementationsSpec @(HashMap Text Int)
     implementationsSpec @(Map String Int)

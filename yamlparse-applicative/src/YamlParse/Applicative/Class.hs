@@ -9,8 +9,11 @@ module YamlParse.Applicative.Class where
 import qualified Data.Aeson as JSON
 import Data.HashMap.Strict (HashMap)
 import Data.Int
+import Data.List.NonEmpty as NE
 import Data.Map (Map)
 import Data.Scientific
+import Data.Set (Set)
+import qualified Data.Set as S
 import qualified Data.Text as T
 import Data.Text (Text)
 import Data.Vector (Vector)
@@ -117,6 +120,17 @@ instance YamlSchema a => YamlSchema (Vector a) where
 
 instance YamlSchema a => YamlSchema [a] where
   yamlSchema = yamlSchemaList
+
+instance YamlSchema a => YamlSchema (NonEmpty a) where
+  yamlSchema = extraParser go yamlSchema
+    where
+      go :: [a] -> Yaml.Parser (NonEmpty a)
+      go as = case NE.nonEmpty as of
+        Nothing -> fail "Nonempty list expected, but got an empty list"
+        Just ne -> pure ne
+
+instance (Ord a, YamlSchema a) => YamlSchema (Set a) where
+  yamlSchema = S.fromList <$> yamlSchema
 
 instance (Ord k, YamlKeySchema k, YamlSchema v) => YamlSchema (Map k v) where
   yamlSchema = ParseObject Nothing $ ParseMapKeys yamlKeySchema $ ParseMap yamlSchema
