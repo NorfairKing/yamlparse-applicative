@@ -21,8 +21,8 @@ import YamlParse.Applicative.Parser
 --
 -- This is meant for humans.
 -- The output may look like YAML but it is not.
-prettySchemaDoc :: forall o i. YamlSchema o => Text
-prettySchemaDoc = prettyParserDoc (yamlSchema @o)
+prettySchemaDoc :: forall a. YamlSchema a => Text
+prettySchemaDoc = prettyParserDoc (yamlSchema @a)
 
 -- | Render pretty documentation about a parser
 --
