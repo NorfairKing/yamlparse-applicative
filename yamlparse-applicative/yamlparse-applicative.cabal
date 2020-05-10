@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 672687e38104a0d33d85b5105076de8eb8e5fcf05a7978598b47f291c3bfcaac
+-- hash: 63f792362464bdaad4d56636d97966fab17cacd6884f9f3f049a8617543a6cb8
 
 name:           yamlparse-applicative
-version:        0.1.0.0
+version:        0.1.0.1
 synopsis:       Declaritive configuration parsing with free docs
 description:    See https://github.com/NorfairKing/yamlparse-applicative
 homepage:       https://github.com/NorfairKing/yamlparse-applicative#readme
