@@ -1,9 +1,11 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 
 module YamlParse.Applicative.Pretty where
 
@@ -11,7 +13,23 @@ import qualified Data.Text as T
 import Data.Text (Text)
 import Data.Text.Prettyprint.Doc
 import Data.Text.Prettyprint.Doc.Render.Text
+import YamlParse.Applicative.Class
 import YamlParse.Applicative.Explain
+import YamlParse.Applicative.Parser
+
+-- | Render pretty documentation about the 'yamlSchema' of a type
+--
+-- This is meant for humans.
+-- The output may look like YAML but it is not.
+prettySchemaDoc :: forall o i. YamlSchema o => Text
+prettySchemaDoc = prettyParserDoc (yamlSchema @o)
+
+-- | Render pretty documentation about a parser
+--
+-- This is meant for humans.
+-- The output may look like YAML but it is not.
+prettyParserDoc :: Parser i o -> Text
+prettyParserDoc = prettySchema . explainParser
 
 -- | Render a schema as pretty text.
 --

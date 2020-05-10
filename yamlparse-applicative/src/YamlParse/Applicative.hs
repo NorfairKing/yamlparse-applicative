@@ -113,6 +113,10 @@ module YamlParse.Applicative
     implementParser,
 
     -- * Documentation for a 'Parser'
+    prettySchemaDoc,
+    prettyParserDoc,
+
+    -- ** Parser schemas
     explainParser,
     Schema (..),
 
