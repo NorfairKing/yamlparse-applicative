@@ -16,6 +16,7 @@ import Data.Text.Prettyprint.Doc.Render.Text
 import YamlParse.Applicative.Class
 import YamlParse.Applicative.Explain
 import YamlParse.Applicative.Parser
+import Data.Text.Prettyprint.Doc.Render.Util.StackMachine
 
 -- | Render pretty documentation about the 'yamlSchema' of a type
 --
@@ -38,8 +39,23 @@ prettyParserDoc = prettySchema . explainParser
 prettySchema :: Schema -> Text
 prettySchema = renderStrict . layoutPretty defaultLayoutOptions . schemaDoc
 
+-- | Render a schema as pretty and colorized text.
+--
+-- This is meant for humans.
+-- The output may look like YAML but it is not.
+prettyColorizedSchema :: Schema -> Text
+prettyColorizedSchema = renderSimplyDecorated id startColor resetColor . layoutPretty defaultLayoutOptions . schemaDoc
+
+startColor :: Color -> Text
+startColor = \case
+  Yellow -> "\x1b[33m"
+  Grey -> "\x1b[2m"
+
+resetColor :: Color -> Text
+resetColor _ = "\x1b[0m"
+
 -- | A list of comments
-newtype Comments = Comments {commentsList :: [Doc ()]}
+newtype Comments = Comments {commentsList :: [Doc Color]}
   deriving (Show)
 
 instance Semigroup Comments where
@@ -57,17 +73,19 @@ emptyComments = Comments []
 comment :: Text -> Comments
 comment t = Comments $ map pretty $ T.lines t
 
+data Color = Yellow | Grey
+
 -- | Prettyprint a 'Schema'
-schemaDoc :: Schema -> Doc ()
+schemaDoc :: Schema -> Doc Color
 schemaDoc = go emptyComments
   where
-    go :: Comments -> Schema -> Doc ()
+    go :: Comments -> Schema -> Doc Color
     go cs =
       let g = go cs
           ge = go emptyComments
-          mkComment :: Doc () -> Doc ()
-          mkComment = ("# " <>)
-          mkCommentsMDoc :: Comments -> Maybe (Doc ())
+          mkComment :: Doc Color -> Doc Color
+          mkComment = (annotate Grey) . ("# " <>)
+          mkCommentsMDoc :: Comments -> Maybe (Doc Color)
           mkCommentsMDoc = \case
             Comments [] -> Nothing
             Comments l -> Just $ align $ vsep $ map mkComment l
@@ -75,11 +93,11 @@ schemaDoc = go emptyComments
           addMComment c = \case
             Nothing -> c
             Just t -> c <> comment t
-          e :: Doc () -> Comments -> Doc ()
+          e :: Doc Color -> Comments -> Doc Color
           e s cs' =
             case mkCommentsMDoc cs' of
               Nothing -> s
-              Just cd -> vsep [cd, s]
+              Just cd -> vsep [cd, annotate Yellow s]
        in \case
             EmptySchema -> e "# Nothing to parse" cs
             AnySchema -> e "<any>" cs

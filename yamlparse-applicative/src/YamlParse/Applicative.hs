@@ -122,6 +122,7 @@ module YamlParse.Applicative
 
     -- ** Showing the schema to the user
     prettySchema,
+    prettyColorizedSchema,
 
     -- * Interface with 'optparse-applicative'
     confDesc,
