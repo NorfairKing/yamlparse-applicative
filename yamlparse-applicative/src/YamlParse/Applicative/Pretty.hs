@@ -9,15 +9,15 @@
 
 module YamlParse.Applicative.Pretty where
 
+import Data.Maybe
 import qualified Data.Text as T
 import Data.Text (Text)
-import Data.Maybe
 import Data.Text.Prettyprint.Doc
 import Data.Text.Prettyprint.Doc.Render.Text
+import Data.Text.Prettyprint.Doc.Render.Util.StackMachine
 import YamlParse.Applicative.Class
 import YamlParse.Applicative.Explain
 import YamlParse.Applicative.Parser
-import Data.Text.Prettyprint.Doc.Render.Util.StackMachine
 
 data Color = Yellow | Gray | Red | Blue | White
 
@@ -48,15 +48,16 @@ prettySchema = renderStrict . layoutPretty defaultLayoutOptions . schemaDoc
 -- The output may look like YAML but it is not.
 prettyColorizedSchema :: Schema -> Text
 prettyColorizedSchema = renderSimplyDecorated id startColor resetColor . layoutPretty defaultLayoutOptions . schemaDoc
-  where startColor :: Color -> Text
-        startColor = \case
-          Yellow -> "\x1b[33m"
-          Gray -> "\x1b[2m"
-          Red -> "\x1b[31m"
-          Blue -> "\x1b[34m"
-          White -> "\x1b[37m"
-        resetColor :: Color -> Text
-        resetColor _ = "\x1b[0m"
+  where
+    startColor :: Color -> Text
+    startColor = \case
+      Yellow -> "\x1b[33m"
+      Gray -> "\x1b[2m"
+      Red -> "\x1b[31m"
+      Blue -> "\x1b[34m"
+      White -> "\x1b[37m"
+    resetColor :: Color -> Text
+    resetColor _ = "\x1b[0m"
 
 -- | A list of comments
 newtype Comments = Comments {commentsList :: [Doc Color]}
@@ -90,7 +91,7 @@ schemaDoc = go emptyComments
           mkCommentsMDoc :: Comments -> Maybe (Doc Color)
           mkCommentsMDoc = \case
             Comments [] -> Nothing
-            Comments l -> Just $ align $ vsep $ map ((annotate Gray) . mkComment) l
+            Comments l -> Just $ align $ vsep $ map (annotate Gray . mkComment) l
           addMComment :: Comments -> Maybe Text -> Comments
           addMComment c = \case
             Nothing -> c
@@ -112,10 +113,8 @@ schemaDoc = go emptyComments
             ArraySchema t s -> "-" <+> align (go (addMComment cs t) s)
             -- The comments really only work on the object level
             -- so they are erased when going down
-            ObjectSchema t s -> vsep
-              [ e "<object>" (addMComment cs t)
-              , ge s
-              ]
+            ObjectSchema t AnySchema -> e "<object>" (addMComment cs t)
+            ObjectSchema t s -> e (ge s) (addMComment cs t)
             FieldSchema k r md s ->
               let keyDoc :: Doc Color
                   keyDoc = pretty k
@@ -126,7 +125,8 @@ schemaDoc = go emptyComments
                       else case md of
                         Nothing -> blueOptional
                         Just d -> blueOptional <+> ", default:" <+> pretty d
-                    where blueOptional = annotate Blue "optional"
+                    where
+                      blueOptional = annotate Blue "optional"
                in vsep
                     [ annotate White keyDoc <> ":" <+> mkComment requiredDoc,
                       indent 2 $ g s
@@ -139,10 +139,11 @@ schemaDoc = go emptyComments
               let listDoc :: [Doc Color] -> Doc Color
                   listDoc = \case
                     [] -> "[]"
-                    (d : ds) -> vsep
-                      [ "[" <+> nest 2 d
-                      , vsep $ map (("," <+>) . nest 2) ds
-                      , "]"
-                      ]
-              in listDoc $ map ge ss
+                    (d : ds) ->
+                      vsep
+                        [ "[" <+> nest 2 d,
+                          vsep $ map (("," <+>) . nest 2) ds,
+                          "]"
+                        ]
+               in listDoc $ map ge ss
             CommentSchema t s -> go (cs <> comment t) s
