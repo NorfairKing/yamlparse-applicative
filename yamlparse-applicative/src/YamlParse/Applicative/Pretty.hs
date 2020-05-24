@@ -102,7 +102,7 @@ schemaDoc = go emptyComments
        in \case
             EmptySchema -> e emptyDoc $ addMComment cs $ Just "Nothing to parse"
             AnySchema -> e "<any>" cs
-            ExactSchema t -> e (pretty t <+> annotate Gray "(exact)") cs
+            ExactSchema t -> e (pretty t) cs <+> fromJust (mkCommentsMDoc $ comment "(exact)")
             NullSchema -> e "null" cs
             MaybeSchema s -> go (cs <> comment "or <null>") s
             BoolSchema t -> e "<boolean>" $ addMComment cs t
