@@ -19,7 +19,7 @@ import YamlParse.Applicative.Explain
 import YamlParse.Applicative.Parser
 import Data.Text.Prettyprint.Doc.Render.Util.StackMachine
 
-data Color = Yellow | Gray | Red | Blue
+data Color = Yellow | Gray | Red | Blue | White
 
 -- | Render pretty documentation about the 'yamlSchema' of a type
 --
@@ -54,6 +54,7 @@ prettyColorizedSchema = renderSimplyDecorated id startColor resetColor . layoutP
           Gray -> "\x1b[2m"
           Red -> "\x1b[31m"
           Blue -> "\x1b[34m"
+          White -> "\x1b[37m"
         resetColor :: Color -> Text
         resetColor _ = "\x1b[0m"
 
@@ -127,7 +128,7 @@ schemaDoc = go emptyComments
                         Just d -> blueOptional <+> ", default:" <+> pretty d
                     where blueOptional = annotate Blue "optional"
                in vsep
-                    [ keyDoc <> ":" <+> mkComment requiredDoc,
+                    [ annotate White keyDoc <> ":" <+> mkComment requiredDoc,
                       indent 2 $ g s
                     ]
             ListSchema s -> g s
