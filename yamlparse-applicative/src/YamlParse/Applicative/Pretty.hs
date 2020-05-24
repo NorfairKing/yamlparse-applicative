@@ -132,7 +132,7 @@ schemaDoc = go emptyComments
                       indent 2 $ g s
                     ]
             ListSchema s -> g s
-            MapSchema s -> e ("<key>: " <> nest 2 (g s)) cs
+            MapSchema s -> e (annotate White "<key>: " <> nest 2 (g s)) cs
             MapKeysSchema s -> g s
             ApSchema s1 s2 -> align $ vsep [g s1, g s2]
             AltSchema ss ->
