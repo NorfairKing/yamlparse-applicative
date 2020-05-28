@@ -115,6 +115,8 @@ module YamlParse.Applicative
     -- * Documentation for a 'Parser'
     prettySchemaDoc,
     prettyParserDoc,
+    prettyColourisedSchemaDoc,
+    prettyColourisedParserDoc,
 
     -- ** Parser schemas
     explainParser,
@@ -122,7 +124,7 @@ module YamlParse.Applicative
 
     -- ** Showing the schema to the user
     prettySchema,
-    prettyColorizedSchema,
+    prettyColourisedSchema,
 
     -- * Interface with 'optparse-applicative'
     confDesc,

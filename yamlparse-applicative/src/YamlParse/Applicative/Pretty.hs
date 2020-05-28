@@ -19,7 +19,7 @@ import YamlParse.Applicative.Class
 import YamlParse.Applicative.Explain
 import YamlParse.Applicative.Parser
 
-data Color = Yellow | Gray | Red | Blue | White
+data Colour = Yellow | Gray | Red | Blue | White
 
 -- | Render pretty documentation about the 'yamlSchema' of a type
 --
@@ -35,6 +35,20 @@ prettySchemaDoc = prettyParserDoc (yamlSchema @a)
 prettyParserDoc :: Parser i o -> Text
 prettyParserDoc = prettySchema . explainParser
 
+-- | Render pretty colourised documentation about the 'yamlSchema' of a type
+--
+-- This is meant for humans.
+-- The output may look like YAML but it is not.
+prettyColourisedSchemaDoc :: forall a. YamlSchema a => Text
+prettyColourisedSchemaDoc = prettyColourisedParserDoc (yamlSchema @a)
+
+-- | Render pretty colourised documentation about a parser
+--
+-- This is meant for humans.
+-- The output may look like YAML but it is not.
+prettyColourisedParserDoc :: Parser i o -> Text
+prettyColourisedParserDoc = prettyColourisedSchema . explainParser
+
 -- | Render a schema as pretty text.
 --
 -- This is meant for humans.
@@ -42,25 +56,25 @@ prettyParserDoc = prettySchema . explainParser
 prettySchema :: Schema -> Text
 prettySchema = renderStrict . layoutPretty defaultLayoutOptions . schemaDoc
 
--- | Render a schema as pretty and colorized text.
+-- | Render a schema as pretty and colourised text.
 --
 -- This is meant for humans.
 -- The output may look like YAML but it is not.
-prettyColorizedSchema :: Schema -> Text
-prettyColorizedSchema = renderSimplyDecorated id startColor resetColor . layoutPretty defaultLayoutOptions . schemaDoc
+prettyColourisedSchema :: Schema -> Text
+prettyColourisedSchema = renderSimplyDecorated id startColour resetColour . layoutPretty defaultLayoutOptions . schemaDoc
   where
-    startColor :: Color -> Text
-    startColor = \case
+    startColour :: Colour -> Text
+    startColour = \case
       Yellow -> "\x1b[33m"
       Gray -> "\x1b[2m"
       Red -> "\x1b[31m"
       Blue -> "\x1b[34m"
       White -> "\x1b[37m"
-    resetColor :: Color -> Text
-    resetColor _ = "\x1b[0m"
+    resetColour :: Colour -> Text
+    resetColour _ = "\x1b[0m"
 
 -- | A list of comments
-newtype Comments = Comments {commentsList :: [Doc Color]}
+newtype Comments = Comments {commentsList :: [Doc Colour]}
   deriving (Show)
 
 instance Semigroup Comments where
@@ -79,16 +93,16 @@ comment :: Text -> Comments
 comment t = Comments $ map pretty $ T.lines t
 
 -- | Prettyprint a 'Schema'
-schemaDoc :: Schema -> Doc Color
+schemaDoc :: Schema -> Doc Colour
 schemaDoc = go emptyComments
   where
-    go :: Comments -> Schema -> Doc Color
+    go :: Comments -> Schema -> Doc Colour
     go cs =
       let g = go cs
           ge = go emptyComments
-          mkComment :: Doc Color -> Doc Color
+          mkComment :: Doc Colour -> Doc Colour
           mkComment = ("# " <>)
-          mkCommentsMDoc :: Comments -> Maybe (Doc Color)
+          mkCommentsMDoc :: Comments -> Maybe (Doc Colour)
           mkCommentsMDoc = \case
             Comments [] -> Nothing
             Comments l -> Just $ align $ vsep $ map (annotate Gray . mkComment) l
@@ -96,7 +110,7 @@ schemaDoc = go emptyComments
           addMComment c = \case
             Nothing -> c
             Just t -> c <> comment t
-          e :: Doc Color -> Comments -> Doc Color
+          e :: Doc Colour -> Comments -> Doc Colour
           e s cs' =
             case mkCommentsMDoc cs' of
               Nothing -> annotate Yellow s
@@ -116,9 +130,9 @@ schemaDoc = go emptyComments
             ObjectSchema t AnySchema -> e "<object>" (addMComment cs t)
             ObjectSchema t s -> e (ge s) (addMComment cs t)
             FieldSchema k r md s ->
-              let keyDoc :: Doc Color
+              let keyDoc :: Doc Colour
                   keyDoc = pretty k
-                  requiredDoc :: Doc Color
+                  requiredDoc :: Doc Colour
                   requiredDoc =
                     if r
                       then annotate Red "required"
@@ -136,7 +150,7 @@ schemaDoc = go emptyComments
             MapKeysSchema s -> g s
             ApSchema s1 s2 -> align $ vsep [g s1, g s2]
             AltSchema ss ->
-              let listDoc :: [Doc Color] -> Doc Color
+              let listDoc :: [Doc Colour] -> Doc Colour
                   listDoc = \case
                     [] -> "[]"
                     (d : ds) ->

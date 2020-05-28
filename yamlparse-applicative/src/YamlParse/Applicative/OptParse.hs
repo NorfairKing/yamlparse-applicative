@@ -20,4 +20,4 @@ confDesc = confDescWith (yamlSchema :: YamlParser o)
 
 -- | Helper function to add the schema documentation for a given parser to the optparse applicative help output
 confDescWith :: Parser i o -> OptParse.InfoMod a
-confDescWith p = OptParse.footerDoc $ Just $ OptParse.string . T.unpack . prettySchema $ explainParser p
+confDescWith p = OptParse.footerDoc $ Just $ OptParse.string . T.unpack . prettyColourisedSchema $ explainParser p
