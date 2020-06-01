@@ -128,6 +128,7 @@ module YamlParse.Applicative
 
     -- * Interface with 'optparse-applicative'
     confDesc,
+    confDescWith,
 
     -- * Parsing a file
     readConfigFile,
