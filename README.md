@@ -14,7 +14,7 @@ data MyConfig
   = MyConfig
       { myConfigText :: Text,
         myConfigScientific :: Maybe Scientific,
-        myConfigList :: [Bool],
+        myConfigList :: [Bool]
       }
   deriving (Show, Eq)
 
