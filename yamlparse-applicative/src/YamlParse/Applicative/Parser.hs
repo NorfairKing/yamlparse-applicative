@@ -152,7 +152,7 @@ viaRead = maybeParser readMaybe $ T.unpack <$> ParseString Nothing ParseAny
 -- > instance YamlSchema Fruit where
 -- >   yamlSchema = Apple <$ literalString "Apple" <|> Banana <$ literalString "Banana"
 literalString :: Text -> YamlParser Text
-literalString t = ParseString Nothing $ ParseEq t t ParseAny
+literalString t = ParseString Nothing $ ParseEq t (T.pack $ show t) ParseAny
 
 -- | Declare a parser for a value using its show instance
 --

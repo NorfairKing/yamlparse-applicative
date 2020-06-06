@@ -1,13 +1,16 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module YamlParse.Applicative.Demo where
 
 import Control.Applicative
+import Data.Aeson
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Map (Map)
 import Data.Set (Set)
 import Data.Text (Text)
 import qualified Data.Text.IO as T
+import GHC.Generics (Generic)
 import Path
 import YamlParse.Applicative
 
@@ -65,7 +68,7 @@ instance YamlSchema MySubConfig where
         <*> (Left <$> requiredField "left" "The left case" <|> Right <$> requiredField "right" "The right case")
 
 data Fruit = Apple | Banana | Melon
-  deriving (Show)
+  deriving (Show, Generic)
 
 instance YamlSchema Fruit where
   yamlSchema =
@@ -74,3 +77,5 @@ instance YamlSchema Fruit where
         literalShowValue Banana,
         literalShowValue Melon
       ]
+
+instance ToJSON Fruit
