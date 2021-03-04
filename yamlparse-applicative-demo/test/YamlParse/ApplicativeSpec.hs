@@ -17,10 +17,10 @@ import Data.Set (Set)
 import Data.Text (Text)
 import Data.Typeable
 import GHC.Generics (Generic)
-import Test.Hspec
 import Test.QuickCheck
-import Test.Validity
-import Test.Validity.Utils
+import Test.Syd
+import Test.Syd.Validity
+import Test.Syd.Validity.Utils
 import YamlParse.Applicative as Yaml
 
 spec :: Spec

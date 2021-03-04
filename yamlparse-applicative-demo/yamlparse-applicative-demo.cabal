@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 69e8ff9863f00dbba90efb899b7a285c014003343a0842d40b11c5d475c6e07b
+-- hash: 2f37ed7ebf02ca03b981fedeeb5119afa1846f499e96f21be5bfcad01c90cde2
 
 name:           yamlparse-applicative-demo
 version:        0.0.0.0
@@ -46,4 +46,33 @@ executable yamlparse-applicative-demo
   build-depends:
       base >=4.7 && <5
     , yamlparse-applicative-demo
+  default-language: Haskell2010
+
+test-suite yamlparse-applicative-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      YamlParse.ApplicativeSpec
+      Paths_yamlparse_applicative_demo
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-tool-depends:
+      sydtest-discover:sydtest-discover
+  build-depends:
+      QuickCheck
+    , aeson
+    , base >=4.7 && <5
+    , containers
+    , genvalidity-aeson
+    , genvalidity-containers
+    , genvalidity-scientific
+    , genvalidity-sydtest
+    , genvalidity-text
+    , genvalidity-unordered-containers
+    , scientific
+    , sydtest
+    , text
+    , unordered-containers
+    , yamlparse-applicative
   default-language: Haskell2010

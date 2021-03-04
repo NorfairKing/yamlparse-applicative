@@ -29,3 +29,29 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - yamlparse-applicative-demo
+
+tests:
+  yamlparse-applicative-test:
+    main: Spec.hs
+    source-dirs: test
+    build-tools: sydtest-discover
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - QuickCheck
+    - aeson
+    - containers
+    - genvalidity-aeson
+    - genvalidity-containers
+    - genvalidity-sydtest
+    - genvalidity-scientific
+    - genvalidity-text
+    - genvalidity-unordered-containers
+    - sydtest
+    - scientific
+    - text
+    - unordered-containers
+    - yamlparse-applicative
+
