@@ -7,8 +7,8 @@
 
 module YamlParse.Applicative.Explain where
 
-import qualified Data.Text as T
 import Data.Text (Text)
+import qualified Data.Text as T
 import Data.Validity
 import Data.Validity.Text ()
 import GHC.Generics (Generic)

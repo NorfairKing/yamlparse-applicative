@@ -14,8 +14,8 @@ import Data.Map (Map)
 import Data.Scientific
 import Data.Set (Set)
 import qualified Data.Set as S
-import qualified Data.Text as T
 import Data.Text (Text)
+import qualified Data.Text as T
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 import Data.Word

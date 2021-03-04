@@ -11,8 +11,8 @@ import qualified Data.ByteString.Lazy as LB
 import Data.HashMap.Strict (HashMap)
 import Data.Map (Map)
 import Data.Scientific
-import qualified Data.Text as T
 import Data.Text (Text)
+import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import Data.Validity.Text ()
 import Data.Vector (Vector)

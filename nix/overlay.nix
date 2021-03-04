@@ -2,20 +2,26 @@ final:
 previous:
 with final.haskell.lib;
 {
-  yamlparsePackages =
+  yamlparseApplicativePackages =
     let
-      yamlparsePkg = name:
-        doBenchmark (failOnAllWarnings (final.haskellPackages.callCabal2nix name (final.gitignoreSource (../. + "/${name}")) {}));
+      yamlparseApplicativePkg = name:
+        doBenchmark (failOnAllWarnings (final.haskellPackages.callCabal2nixWithOptions name (final.gitignoreSource (../. + "/${name}")) "--no-hpack" {}));
     in
       final.lib.genAttrs [
         "yamlparse-applicative"
         "yamlparse-applicative-demo"
-      ] yamlparsePkg;
+      ] yamlparseApplicativePkg;
+
+  yamlparseApplicativeRelease =
+    final.symlinkJoin {
+      name = "safe-coloured-text-release";
+      paths = final.lib.attrValues final.yamlparseApplicativePackages;
+    };
 
   haskellPackages = previous.haskellPackages.override (
     old: {
       overrides = final.lib.composeExtensions (old.overrides or (_: _: {})) (
-        self: super: final.yamlparsePackages
+        self: super: final.yamlparseApplicativePackages
       );
     }
   );

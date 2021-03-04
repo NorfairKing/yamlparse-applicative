@@ -6,7 +6,7 @@ let
     );
 
 in
-pkgs.yamlparsePackages // {
+pkgs.yamlparseApplicativePackages // {
   pre-commit-check = nix-pre-commit-hooks.run {
     src = ./.;
     hooks = {

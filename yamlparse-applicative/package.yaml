@@ -23,6 +23,7 @@ library:
   - path
   - path-io
   - prettyprinter
+  - safe-coloured-text
   - scientific
   - text
   - unordered-containers

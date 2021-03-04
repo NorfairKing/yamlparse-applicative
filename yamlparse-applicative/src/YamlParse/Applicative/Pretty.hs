@@ -10,8 +10,8 @@
 module YamlParse.Applicative.Pretty where
 
 import Data.Maybe
-import qualified Data.Text as T
 import Data.Text (Text)
+import qualified Data.Text as T
 import Data.Text.Prettyprint.Doc
 import Data.Text.Prettyprint.Doc.Render.Text
 import Data.Text.Prettyprint.Doc.Render.Util.StackMachine
