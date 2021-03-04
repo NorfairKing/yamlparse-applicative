@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.2.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ded1b4f5ee3db66fbcd6e3f4573306cbe3dd7edae1f55ae9ab6de42b25805e58
+-- hash: 9e5d7dec7813946ce6b1aec684ac0c69a92aa2278576f4d276acdeea48e0e23e
 
 name:           yamlparse-applicative
 version:        0.1.0.2
@@ -45,6 +45,7 @@ library
     , path
     , path-io
     , prettyprinter
+    , safe-coloured-text
     , scientific
     , text
     , unordered-containers

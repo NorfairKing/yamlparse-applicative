@@ -14,7 +14,7 @@ with final.haskell.lib;
 
   yamlparseApplicativeRelease =
     final.symlinkJoin {
-      name = "safe-coloured-text-release";
+      name = "yamlparse-applicative-release";
       paths = final.lib.attrValues final.yamlparseApplicativePackages;
     };
 

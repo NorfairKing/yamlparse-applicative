@@ -8,7 +8,6 @@
 module YamlParse.Applicative.Implement where
 
 import Control.Applicative
-import qualified Data.Aeson as Aeson
 import qualified Data.Aeson.Types as Aeson
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Map as M
@@ -66,17 +65,17 @@ implementParser = go
       ParseField key fp -> \o -> case fp of
         FieldParserRequired p -> do
           v <- o Yaml..: key
-          go p v Aeson.<?> Aeson.Key key
+          go p v
         FieldParserOptional p -> do
           mv <- o Yaml..:? key
           case mv of
             Nothing -> pure Nothing
-            Just v -> Just <$> go p v Aeson.<?> Aeson.Key key
+            Just v -> Just <$> go p v
         FieldParserOptionalWithDefault p d -> do
           mv <- o Yaml..:? key
           case mv of
             Nothing -> pure d
-            Just v -> go p v Aeson.<?> Aeson.Key key
+            Just v -> go p v
       ParseList p -> mapM (go p)
       ParseMap p -> HM.traverseWithKey $ \_ v -> go p v
       ParseMapKeys p pm -> \val -> do

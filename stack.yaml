@@ -2,7 +2,11 @@ resolver: lts-14.23
 packages:
 - yamlparse-applicative
 - yamlparse-applicative-demo
-
+extra-deps:
+  - github: NorfairKing/safe-coloured-text
+    commit: 61d959e65eeb6f4180d8ea4a0e2de1d5037b1394
+    subdirs:
+      - safe-coloured-text
 nix:
   path: [ "nixpkgs=https://github.com/NixOS/nixpkgs/archive/323fe92057bb38475a446ff5e18d3b388c2e4403.tar.gz" ]
   add-gc-roots: true
