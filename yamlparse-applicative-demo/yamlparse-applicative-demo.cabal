@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2f37ed7ebf02ca03b981fedeeb5119afa1846f499e96f21be5bfcad01c90cde2
+-- hash: 7a5b535ae4246e96f202d979f09129c4dd20111e17ec53d32d8868f72bf3e2b8
 
 name:           yamlparse-applicative-demo
 version:        0.0.0.0
@@ -52,6 +52,7 @@ test-suite yamlparse-applicative-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      YamlParse.Applicative.PrettySpec
       YamlParse.ApplicativeSpec
       Paths_yamlparse_applicative_demo
   hs-source-dirs:
@@ -70,9 +71,12 @@ test-suite yamlparse-applicative-test
     , genvalidity-sydtest
     , genvalidity-text
     , genvalidity-unordered-containers
+    , path
     , scientific
     , sydtest
     , text
     , unordered-containers
+    , vector
     , yamlparse-applicative
+    , yamlparse-applicative-demo
   default-language: Haskell2010

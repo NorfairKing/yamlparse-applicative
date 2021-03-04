@@ -45,13 +45,15 @@ tests:
     - containers
     - genvalidity-aeson
     - genvalidity-containers
-    - genvalidity-sydtest
     - genvalidity-scientific
+    - genvalidity-sydtest
     - genvalidity-text
     - genvalidity-unordered-containers
-    - sydtest
+    - path
     - scientific
+    - sydtest
     - text
     - unordered-containers
+    - vector
     - yamlparse-applicative
-
+    - yamlparse-applicative-demo

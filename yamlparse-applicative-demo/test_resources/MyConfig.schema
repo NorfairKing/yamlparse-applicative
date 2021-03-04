@@ -1,0 +1,51 @@
+# MyConfig
+foo: # required
+  # My foo
+  <string>
+bar: # optional
+  # My bar
+  <number>
+quux: # optional , default: []
+  - # My quux
+    <boolean>
+sub: # optional
+  # My sub
+  # MySubConfig
+  foofoo: # optional
+    # My foofoo
+    <boolean>
+  barbar: # optional , default: "defaultTextHere"
+    # My bar
+    <string>
+  [ left: # required
+      # The left case
+      <string>
+  , right: # required
+      # The right case
+      <boolean>
+  ]
+fruit: # required
+  [ "Apple" # (exact)
+  , "Banana" # (exact)
+  , "Melon" # (exact)
+  ]
+empty: # required
+  # My null
+  # Nothing to parse
+  
+num: # required
+  # My maybe
+  # or <null>
+  <number>
+map: # required
+  # My map
+  <key>: <number>
+set: # required
+  - # My set
+    <string>
+nelist: # required
+  - # My nonempty list
+    <number>
+path: # required
+  # My path
+  <string>
