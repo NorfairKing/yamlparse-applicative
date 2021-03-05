@@ -11,11 +11,11 @@ extra-deps:
   - genvalidity
   - genvalidity-sydtest
 - github: NorfairKing/safe-coloured-text
-  commit: 61d959e65eeb6f4180d8ea4a0e2de1d5037b1394
+  commit: 6e8db7c2fe904ead46a1c4c8e15f645d7d7c44c2
   subdirs:
     - safe-coloured-text
 - github: NorfairKing/sydtest
-  commit: b51714b62418f5a2d57694a51cbf9bba1878a3be
+  commit: a0d30b4ad76bf29b28893320dc777a7709441252
   subdirs:
     - sydtest
     - sydtest-discover
