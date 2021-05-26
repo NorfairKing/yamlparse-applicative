@@ -19,20 +19,19 @@ main =
   T.putStrLn . prettySchema $
     explainParser (yamlSchema :: YamlParser MyConfig)
 
-data MyConfig
-  = MyConfig
-      { myConfigText :: Text,
-        myConfigScientific :: Maybe Int,
-        myConfigList :: [Bool],
-        myConfigSub :: Maybe MySubConfig,
-        myConfigFruit :: Fruit,
-        myConfigNull :: (),
-        myConfigMaybe :: Maybe Int,
-        myConfigMap :: Map Text Int,
-        myConfigSet :: Set Text,
-        myConfigNEList :: NonEmpty Int,
-        myConfigPath :: Path Rel File
-      }
+data MyConfig = MyConfig
+  { myConfigText :: Text,
+    myConfigScientific :: Maybe Int,
+    myConfigList :: [Bool],
+    myConfigSub :: Maybe MySubConfig,
+    myConfigFruit :: Fruit,
+    myConfigNull :: (),
+    myConfigMaybe :: Maybe Int,
+    myConfigMap :: Map Text Int,
+    myConfigSet :: Set Text,
+    myConfigNEList :: NonEmpty Int,
+    myConfigPath :: Path Rel File
+  }
   deriving (Show)
 
 instance YamlSchema MyConfig where
@@ -51,12 +50,11 @@ instance YamlSchema MyConfig where
         <*> requiredField "nelist" "My nonempty list"
         <*> requiredField "path" "My path"
 
-data MySubConfig
-  = MySubConfig
-      { mySubConfigBool :: Maybe Bool,
-        mySubConfigText :: Text,
-        mySubConfigAlt :: Either Text Bool
-      }
+data MySubConfig = MySubConfig
+  { mySubConfigBool :: Maybe Bool,
+    mySubConfigText :: Text,
+    mySubConfigAlt :: Either Text Bool
+  }
   deriving (Show)
 
 instance YamlSchema MySubConfig where

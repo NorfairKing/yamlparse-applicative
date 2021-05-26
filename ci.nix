@@ -1,22 +1,25 @@
-{ pkgs ? import ./nix/pkgs.nix {} }:
 let
-  versions = [
-    "lts-13_19"
-    "lts-14_23"
-    "lts-15_03"
-    "lts-16_11"
-    "lts-16_20"
-  ];
+  sources = import ./nix/sources.nix;
 
-  mkReleaseForVersion = version:
+  versions = {
+    "lts-13_19" = "82d2c663b4dffbd635ed694bcc301284987b8097";
+    "lts-14_23" = "a87b506140a7267477103759c3f8da5b2e8d994e";
+    "lts-15_03" = "beeb24f1e939be7d85fdd64e31f13b8fe8238150";
+    "lts-16_11" = "89db531aea80df58584c9a9e3504ffd9617e6b48";
+    "lts-16_20" = "35b3a1f43a9621a88e906a839f99d8252500152b";
+  };
+
+  mkReleaseForVersion = version: rev:
     let
-      nixpkgsVersion = import (./ci + "/${version}.nix");
-      pkgsf = import ./nix/nixpkgs.nix { inherit nixpkgsVersion; };
-      p = import ./nix/pkgs.nix { inherit pkgsf; };
+      pkgsf = builtins.fetchGit {
+        url = "https://github.com/NixOS/nixpkgs";
+        inherit rev;
+      };
+      p = import ./nix/pkgs.nix { inherit sources; inherit pkgsf; };
     in
-      p.yamlparseApplicativeRelease;
+    p.yamlparseApplicativeRelease.overrideAttrs (old: { name = "yamlparse-applicative-release-${version}"; });
 in
 {
-  release = pkgs.yamlparseApplicativeRelease;
-  pre-commit-check = (import ./default.nix).pre-commit-check;
-} // pkgs.lib.genAttrs versions mkReleaseForVersion
+  release = (import ./nix/pkgs.nix { inherit sources; }).yamlparseApplicativeRelease;
+  pre-commit-check = (import ./nix/pre-commit.nix { }).run;
+} // builtins.mapAttrs mkReleaseForVersion versions

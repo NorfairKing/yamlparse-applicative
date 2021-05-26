@@ -5,12 +5,13 @@ with final.haskell.lib;
   yamlparseApplicativePackages =
     let
       yamlparseApplicativePkg = name:
-        doBenchmark (failOnAllWarnings (final.haskellPackages.callCabal2nixWithOptions name (final.gitignoreSource (../. + "/${name}")) "--no-hpack" {}));
+        doBenchmark (failOnAllWarnings (final.haskellPackages.callCabal2nixWithOptions name (final.gitignoreSource (../. + "/${name}")) "--no-hpack" { }));
     in
-      final.lib.genAttrs [
-        "yamlparse-applicative"
-        "yamlparse-applicative-demo"
-      ] yamlparseApplicativePkg;
+    final.lib.genAttrs [
+      "yamlparse-applicative"
+      "yamlparse-applicative-demo"
+    ]
+      yamlparseApplicativePkg;
 
   yamlparseApplicativeRelease =
     final.symlinkJoin {
@@ -20,7 +21,7 @@ with final.haskell.lib;
 
   haskellPackages = previous.haskellPackages.override (
     old: {
-      overrides = final.lib.composeExtensions (old.overrides or (_: _: {})) (
+      overrides = final.lib.composeExtensions (old.overrides or (_: _: { })) (
         self: super: final.yamlparseApplicativePackages
       );
     }

@@ -51,11 +51,11 @@ readFirstConfigFile files = go files
                         [ "Reference: ",
                           T.unpack $ prettyColourisedSchema $ explainParser (yamlSchema :: YamlParser a)
                         ]
-                  die
-                    $ unlines
-                    $ concat
-                      [ failedMsgs,
-                        triedFilesMsgs,
-                        referenceMsgs
-                      ]
+                  die $
+                    unlines $
+                      concat
+                        [ failedMsgs,
+                          triedFilesMsgs,
+                          referenceMsgs
+                        ]
                 Right (ViaYamlSchema conf) -> pure $ Just conf
