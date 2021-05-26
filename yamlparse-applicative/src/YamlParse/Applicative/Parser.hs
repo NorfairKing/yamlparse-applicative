@@ -120,6 +120,8 @@ data FieldParser o where
   FieldParserRequired :: YamlParser o -> FieldParser o
   FieldParserOptional :: YamlParser o -> FieldParser (Maybe o)
   FieldParserOptionalWithDefault :: Show o => YamlParser o -> o -> FieldParser o
+  FieldParserOptionalOrNull :: YamlParser o -> FieldParser (Maybe o)
+  FieldParserOptionalOrNullWithDefault :: Show o => YamlParser o -> o -> FieldParser o
 
 type YamlParser a = Parser Yaml.Value a
 
@@ -253,23 +255,23 @@ requiredFieldWith' k func = ParseField k $ FieldParserRequired func
 
 -- | A parser for an optional field at a given key with a parser for what is found at that key
 optionalFieldWith :: Text -> Text -> YamlParser a -> ObjectParser (Maybe a)
-optionalFieldWith k h func = ParseComment h $ ParseField k $ FieldParserOptional func
+optionalFieldWith k h func = ParseComment h $ ParseField k $ FieldParserOptionalOrNull func
 
 -- | A parser for an optional field at a given key with a parser for what is found at that key without a help text
 optionalFieldWith' :: Text -> YamlParser a -> ObjectParser (Maybe a)
-optionalFieldWith' k func = ParseField k $ FieldParserOptional func
+optionalFieldWith' k func = ParseField k $ FieldParserOptionalOrNull func
 
 -- | A parser for an optional field at a given key with a default value and a parser for what is found at that key
 --
 -- For the sake of documentation, the default value needs to be showable.
 optionalFieldWithDefaultWith :: Show a => Text -> a -> Text -> YamlParser a -> ObjectParser a
-optionalFieldWithDefaultWith k d h func = ParseComment h $ ParseField k $ FieldParserOptionalWithDefault func d
+optionalFieldWithDefaultWith k d h func = ParseComment h $ ParseField k $ FieldParserOptionalOrNullWithDefault func d
 
 -- | A parser for an optional field at a given key with a default value and a parser for what is found at that key without a help text
 --
 -- For the sake of documentation, the default value needs to be showable.
 optionalFieldWithDefaultWith' :: Show a => Text -> a -> YamlParser a -> ObjectParser a
-optionalFieldWithDefaultWith' k d func = ParseField k $ FieldParserOptionalWithDefault func d
+optionalFieldWithDefaultWith' k d func = ParseField k $ FieldParserOptionalOrNullWithDefault func d
 
 -- | Make a parser that parses a value using the given extra parsing function
 --

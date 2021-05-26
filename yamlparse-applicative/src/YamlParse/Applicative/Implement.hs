@@ -66,12 +66,20 @@ implementParser = go
         FieldParserRequired p -> do
           v <- o Yaml..: key
           go p v
-        FieldParserOptional p -> do
+        FieldParserOptional p ->
+          case HM.lookup key o of
+            Nothing -> pure Nothing
+            Just v -> Just <$> go p v
+        FieldParserOptionalWithDefault p d ->
+          case HM.lookup key o of
+            Nothing -> pure d
+            Just v -> go p v
+        FieldParserOptionalOrNull p -> do
           mv <- o Yaml..:? key
           case mv of
             Nothing -> pure Nothing
             Just v -> Just <$> go p v
-        FieldParserOptionalWithDefault p d -> do
+        FieldParserOptionalOrNullWithDefault p d -> do
           mv <- o Yaml..:? key
           case mv of
             Nothing -> pure d

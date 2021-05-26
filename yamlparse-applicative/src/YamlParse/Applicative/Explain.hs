@@ -63,6 +63,8 @@ explainParser = go
         FieldParserRequired p -> FieldSchema k True Nothing $ go p
         FieldParserOptional p -> FieldSchema k False Nothing $ go p
         FieldParserOptionalWithDefault p d -> FieldSchema k False (Just $ T.pack $ show d) $ go p
+        FieldParserOptionalOrNull p -> FieldSchema k False Nothing $ go p
+        FieldParserOptionalOrNullWithDefault p d -> FieldSchema k False (Just $ T.pack $ show d) $ go p
       ParseList p -> ListSchema $ go p
       ParseMap p -> MapSchema $ go p
       ParseMapKeys _ p -> MapKeysSchema $ go p

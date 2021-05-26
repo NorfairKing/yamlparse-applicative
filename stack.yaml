@@ -1,4 +1,4 @@
-resolver: lts-14.23
+resolver: lts-16.12
 packages:
 - yamlparse-applicative
 - yamlparse-applicative-demo
@@ -22,9 +22,6 @@ extra-deps:
 - envparse-0.4.1@sha256:989902e6368532548f61de1fa245ad2b39176cddd8743b20071af519a709ce30,2842
 
 nix:
-  path: [ "nixpkgs=https://github.com/NixOS/nixpkgs/archive/323fe92057bb38475a446ff5e18d3b388c2e4403.tar.gz" ]
-  add-gc-roots: true
-  pure: true
   packages:
   - zlib
   - haskellPackages.hpack
