@@ -5,7 +5,7 @@ with final.haskell.lib;
   yamlparseApplicativePackages =
     let
       yamlparseApplicativePkg = name:
-        doBenchmark (failOnAllWarnings (final.haskellPackages.callCabal2nixWithOptions name (final.gitignoreSource (../. + "/${name}")) "--no-hpack" { }));
+        doBenchmark (buildStrictly (final.haskellPackages.callCabal2nixWithOptions name (final.gitignoreSource (../. + "/${name}")) "--no-hpack" { }));
     in
     final.lib.genAttrs [
       "yamlparse-applicative"
