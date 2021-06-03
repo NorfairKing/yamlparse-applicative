@@ -28,7 +28,11 @@ data Schema
   | StringSchema (Maybe Text)
   | ArraySchema (Maybe Text) Schema
   | ObjectSchema (Maybe Text) Schema
-  | FieldSchema Text Bool (Maybe Text) Schema
+  | FieldSchema
+      Text -- Field name
+      Bool -- Required
+      (Maybe Text) -- Default value
+      Schema -- Schema of the value
   | ListSchema Schema
   | MapSchema Schema
   | MapKeysSchema Schema
@@ -60,11 +64,10 @@ explainParser = go
       ParseArray t p -> ArraySchema t $ go p
       ParseObject t p -> ObjectSchema t $ go p
       ParseField k fp -> case fp of
+        FieldParserFmap _ fp' -> go $ ParseField k fp'
         FieldParserRequired p -> FieldSchema k True Nothing $ go p
         FieldParserOptional p -> FieldSchema k False Nothing $ go p
         FieldParserOptionalWithDefault p d -> FieldSchema k False (Just $ T.pack $ show d) $ go p
-        FieldParserOptionalOrNull p -> FieldSchema k False Nothing $ go p
-        FieldParserOptionalOrNullWithDefault p d -> FieldSchema k False (Just $ T.pack $ show d) $ go p
       ParseList p -> ListSchema $ go p
       ParseMap p -> MapSchema $ go p
       ParseMapKeys _ p -> MapKeysSchema $ go p

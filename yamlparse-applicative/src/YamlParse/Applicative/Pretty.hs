@@ -120,7 +120,7 @@ schemaDoc = go emptyComments
             AnySchema -> e "<any>" cs
             ExactSchema t -> e (pretty t) cs <+> fromJust (mkCommentsMDoc $ comment "(exact)")
             NullSchema -> e "null" cs
-            MaybeSchema s -> go (cs <> comment "or <null>") s
+            MaybeSchema s -> go (comment "or <null>" <> cs) s
             BoolSchema t -> e "<boolean>" $ addMComment cs t
             NumberSchema t -> e "<number>" $ addMComment cs t
             StringSchema t -> e "<string>" $ addMComment cs t

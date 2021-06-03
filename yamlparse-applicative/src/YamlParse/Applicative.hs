@@ -102,6 +102,7 @@ module YamlParse.Applicative
     YamlParser,
     ObjectParser,
     Parser (..),
+    FieldParser (..),
 
     -- * Using a yaml schema
 

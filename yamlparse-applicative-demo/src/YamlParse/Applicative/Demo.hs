@@ -16,7 +16,7 @@ import YamlParse.Applicative
 
 main :: IO ()
 main =
-  T.putStrLn . prettySchema $
+  T.putStrLn . prettyColourisedSchema $
     explainParser (yamlSchema :: YamlParser MyConfig)
 
 data MyConfig = MyConfig
@@ -27,10 +27,12 @@ data MyConfig = MyConfig
     myConfigFruit :: Fruit,
     myConfigNull :: (),
     myConfigMaybe :: Maybe Int,
+    myConfigMaybe2 :: Maybe Int,
     myConfigMap :: Map Text Int,
     myConfigSet :: Set Text,
     myConfigNEList :: NonEmpty Int,
-    myConfigPath :: Path Rel File
+    myConfigPath :: Path Rel File,
+    myConfigNotNull :: Maybe Int
   }
   deriving (Show)
 
@@ -45,10 +47,12 @@ instance YamlSchema MyConfig where
         <*> requiredField "fruit" "My fruit"
         <*> requiredField "empty" "My null"
         <*> requiredField "num" "My maybe"
+        <*> optionalField "num2" "My maybe 2"
         <*> requiredField "map" "My map"
         <*> requiredField "set" "My set"
         <*> requiredField "nelist" "My nonempty list"
         <*> requiredField "path" "My path"
+        <*> ParseField "notnull" (FieldParserOptional yamlSchema)
 
 data MySubConfig = MySubConfig
   { mySubConfigBool :: Maybe Bool,

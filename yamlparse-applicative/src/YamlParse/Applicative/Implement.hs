@@ -63,25 +63,16 @@ implementParser = go
           Yaml.Object o -> go p o
           _ -> Aeson.typeMismatch "Object" v
       ParseField key fp -> \o -> case fp of
+        FieldParserFmap f fp' -> f <$> go (ParseField key fp') o
         FieldParserRequired p -> do
           v <- o Yaml..: key
           go p v
-        FieldParserOptional p ->
+        FieldParserOptional p -> do
           case HM.lookup key o of
             Nothing -> pure Nothing
             Just v -> Just <$> go p v
-        FieldParserOptionalWithDefault p d ->
+        FieldParserOptionalWithDefault p d -> do
           case HM.lookup key o of
-            Nothing -> pure d
-            Just v -> go p v
-        FieldParserOptionalOrNull p -> do
-          mv <- o Yaml..:? key
-          case mv of
-            Nothing -> pure Nothing
-            Just v -> Just <$> go p v
-        FieldParserOptionalOrNullWithDefault p d -> do
-          mv <- o Yaml..:? key
-          case mv of
             Nothing -> pure d
             Just v -> go p v
       ParseList p -> mapM (go p)
