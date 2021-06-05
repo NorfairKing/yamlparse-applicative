@@ -1,28 +1,26 @@
-resolver: lts-16.12
+resolver: nightly-2021-05-10
 packages:
 - yamlparse-applicative
 - yamlparse-applicative-demo
 extra-deps:
 
 - github: NorfairKing/validity
-  commit: 86a824729519c154c23f0757f2ce4b9ab93b675a
+  commit: 549f92de456dd7fbf21b84f2f6fdca9a3c6506d9
   subdirs:
   - validity
   - genvalidity
   - genvalidity-sydtest
 - github: NorfairKing/safe-coloured-text
-  commit: d840dd7b0f13f4d0fd693c1dd93be33f9ee94605
+  commit: b8333a8956975beab54d00fceaa835ee97c3347d
   subdirs:
     - safe-coloured-text
     - safe-coloured-text-terminfo
 - github: NorfairKing/sydtest
-  commit: aafd8e0c2e97143af950e2f9742c5e1bd167c77b
+  commit: 0125c6d6d17d44753c793adc8dcaa4284fef2b7d
   subdirs:
     - sydtest
     - sydtest-discover
 - envparse-0.4.1@sha256:989902e6368532548f61de1fa245ad2b39176cddd8743b20071af519a709ce30,2842
 
 nix:
-  packages:
-  - zlib
-  - haskellPackages.hpack
+  shell-file: shell.nix

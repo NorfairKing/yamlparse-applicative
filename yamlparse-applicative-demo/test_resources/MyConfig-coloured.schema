@@ -3,15 +3,18 @@
   [2m# My foo[0m
   [33m<string>[0m
 [37mbar[0m: # [34moptional[0m
+  [2m# or <null>[0m
   [2m# My bar[0m
   [33m<number>[0m
 [37mquux[0m: # [34moptional[0m , default: []
   - [2m# My quux[0m
     [33m<boolean>[0m
 [37msub[0m: # [34moptional[0m
+  [2m# or <null>[0m
   [2m# My sub[0m
   [2m# MySubConfig[0m
   [33m[37mfoofoo[0m: # [34moptional[0m
+    [2m# or <null>[0m
     [2m# My foofoo[0m
     [33m<boolean>[0m
   [37mbarbar[0m: # [34moptional[0m , default: "defaultTextHere"
@@ -34,8 +37,12 @@
   [2m# Nothing to parse[0m
   [33m[0m
 [37mnum[0m: # [31mrequired[0m
-  [2m# My maybe[0m
   [2m# or <null>[0m
+  [2m# My maybe[0m
+  [33m<number>[0m
+[37mnum2[0m: # [34moptional[0m
+  [2m# or <null>[0m
+  [2m# My maybe 2[0m
   [33m<number>[0m
 [37mmap[0m: # [31mrequired[0m
   [2m# My map[0m
@@ -48,4 +55,6 @@
     [33m<number>[0m
 [37mpath[0m: # [31mrequired[0m
   [2m# My path[0m
-  [33m<string>[0m[0m
+  [33m<string>[0m
+[37mnotnull[0m: # [34moptional[0m
+  [33m<number>[0m[0m

@@ -3,15 +3,18 @@ foo: # required
   # My foo
   <string>
 bar: # optional
+  # or <null>
   # My bar
   <number>
 quux: # optional , default: []
   - # My quux
     <boolean>
 sub: # optional
+  # or <null>
   # My sub
   # MySubConfig
   foofoo: # optional
+    # or <null>
     # My foofoo
     <boolean>
   barbar: # optional , default: "defaultTextHere"
@@ -34,8 +37,12 @@ empty: # required
   # Nothing to parse
   
 num: # required
-  # My maybe
   # or <null>
+  # My maybe
+  <number>
+num2: # optional
+  # or <null>
+  # My maybe 2
   <number>
 map: # required
   # My map
@@ -49,3 +56,5 @@ nelist: # required
 path: # required
   # My path
   <string>
+notnull: # optional
+  <number>
