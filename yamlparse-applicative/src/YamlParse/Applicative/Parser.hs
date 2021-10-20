@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RankNTypes #-}
@@ -9,7 +10,11 @@ import Control.Applicative
 import Control.Monad
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as LB
-import Data.HashMap.Strict (HashMap)
+#if MIN_VERSION_aeson(2,0,0)
+import Data.Aeson.KeyMap (KeyMap)
+#else
+import qualified Data.HashMap.Strict as HM
+#endif
 import Data.Map (Map)
 import Data.Scientific
 import Data.Text (Text)
@@ -19,6 +24,10 @@ import Data.Validity.Text ()
 import Data.Vector (Vector)
 import qualified Data.Yaml as Yaml
 import Text.Read
+
+#if !MIN_VERSION_aeson(2,0,0)
+type KeyMap a = HM.HashMap T.Text a
+#endif
 
 -- | A parser that takes values of type 'i' as input and parses them into values of type 'o'
 --
@@ -77,13 +86,13 @@ data Parser i o where
   -- | Parse a map where the keys are the yaml keys
   ParseMap ::
     Parser Yaml.Value v ->
-    Parser Yaml.Object (HashMap Text v)
+    Parser Yaml.Object (KeyMap v)
   -- | Parse a map's keys via a given parser
   ParseMapKeys ::
     Ord k =>
     Parser Text k ->
-    Parser Yaml.Object (HashMap Text v) ->
-    Parser Yaml.Object (Map k v) -- Once we get out of a HashMap, we'll want to stay out.
+    Parser Yaml.Object (KeyMap v) ->
+    Parser Yaml.Object (Map k v) -- Once we get out of a KeyMap, we'll want to stay out.
 
   -- | Parse a field of an object
   ParseField ::

@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
@@ -9,11 +10,30 @@ module YamlParse.Applicative.Implement where
 
 import Control.Applicative
 import qualified Data.Aeson.Types as Aeson
+#if MIN_VERSION_aeson(2,0,0)
+import qualified Data.Aeson.KeyMap as HM
+import qualified Data.Aeson.Key as K
+#else
 import qualified Data.HashMap.Strict as HM
+#endif
 import qualified Data.Map as M
 import qualified Data.Text as T
 import qualified Data.Yaml as Yaml
 import YamlParse.Applicative.Parser
+
+#if MIN_VERSION_aeson(2,0,0)
+fromText :: T.Text -> K.Key
+fromText = K.fromText
+
+toText :: K.Key -> T.Text
+toText = K.toText
+#else
+fromText :: T.Text -> T.Text
+fromText = id
+
+toText :: T.Text -> T.Text
+toText = id
+#endif
 
 -- | Use a 'Parser' to parse a value from Yaml.
 --
@@ -65,21 +85,21 @@ implementParser = go
       ParseField key fp -> \o -> case fp of
         FieldParserFmap f fp' -> f <$> go (ParseField key fp') o
         FieldParserRequired p -> do
-          v <- o Yaml..: key
+          v <- o Yaml..: fromText key
           go p v
         FieldParserOptional p -> do
-          case HM.lookup key o of
+          case HM.lookup (fromText key) o of
             Nothing -> pure Nothing
             Just v -> Just <$> go p v
         FieldParserOptionalWithDefault p d -> do
-          case HM.lookup key o of
+          case HM.lookup (fromText key) o of
             Nothing -> pure d
             Just v -> go p v
       ParseList p -> mapM (go p)
       ParseMap p -> HM.traverseWithKey $ \_ v -> go p v
       ParseMapKeys p pm -> \val -> do
         hm <- go pm val
-        M.fromList <$> mapM (\(k, v) -> (,) <$> go p k <*> pure v) (HM.toList hm)
+        M.fromList <$> mapM (\(k, v) -> (,) <$> go p (toText k) <*> pure v) (HM.toList hm)
       ParsePure v -> const $ pure v
       ParseAp pf p -> \v -> go pf v <*> go p v
       ParseAlt ps -> \v -> case ps of
