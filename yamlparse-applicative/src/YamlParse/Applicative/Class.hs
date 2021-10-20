@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
@@ -7,7 +8,9 @@
 module YamlParse.Applicative.Class where
 
 import qualified Data.Aeson as JSON
-import Data.HashMap.Strict (HashMap)
+#if MIN_VERSION_aeson(2,0,0)
+import Data.Aeson.KeyMap (KeyMap)
+#endif
 import Data.Int
 import Data.List.NonEmpty as NE
 import Data.Map (Map)
@@ -151,7 +154,7 @@ instance (Ord k, YamlKeySchema k, YamlSchema v) => YamlSchema (Map k v) where
 -- | There is no instance using YamlKeySchema k yet.
 -- Ideally there wouldn't be one for HashMap Text either because it's insecure,
 -- but the yaml arrives in a HashMap anyway so we might as well expose this.
-instance YamlSchema v => YamlSchema (HashMap Text v) where
+instance YamlSchema v => YamlSchema (KeyMap v) where
   yamlSchema = ParseObject Nothing $ ParseMap yamlSchema
 
 -- | A parser for a required field in an object at a given key
